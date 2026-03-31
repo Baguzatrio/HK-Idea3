@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -33,9 +34,22 @@ class UserController extends Controller
     }
 
     public function store(Request $request)
-    {
-        // Implementasi setelah form dibuat
-    }
+{
+    $request->validate([
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|email|unique:users,email',
+        'password' => 'required|string|min:8',
+    ]);
+
+    User::create([
+        'name'      => $request->name,
+        'email'     => $request->email,
+        'password'  => Hash::make($request->password),
+        'divisi_id' => $request->divisi_id ?? null,
+    ]);
+
+    return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
+}
 
     public function edit(User $user)
     {

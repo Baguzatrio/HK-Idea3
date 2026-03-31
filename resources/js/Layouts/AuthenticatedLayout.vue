@@ -33,7 +33,7 @@ const showingNavigationDropdown = ref(false);
                                     <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
                                         Dashboard
                                     </NavLink>
-                                    <div class="relative ms-3">
+                                    <div class="relative">
                                          <Dropdown>
                                         <template #trigger>
                                             <span class="inline-flex rounded-md">
@@ -55,7 +55,7 @@ const showingNavigationDropdown = ref(false);
                                             <DropdownLink :href="route('users.index')">
                                                 User
                                             </DropdownLink>
-                                            <DropdownLink :href="route('profile.edit')">
+                                            <DropdownLink :href="route('divisis.index')">
                                                 Divisi
                                             </DropdownLink>
                                             <DropdownLink :href="route('profile.edit')">
