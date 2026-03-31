@@ -128,7 +128,7 @@ const confirmDelete = (id: number) => {
             </h2>
         </template>
 
-        <div class="py-8">
+        <div class="py-10">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="bg-white shadow rounded-lg overflow-hidden">
 
@@ -205,7 +205,7 @@ const confirmDelete = (id: number) => {
                                         <div class="flex items-center justify-center gap-1.5">
                                             <button
                                                 @click="openEdit(divisi)"
-                                                class="inline-flex items-center justify-center w-7 h-7 bg-yellow-400 hover:bg-yellow-500 text-white rounded transition"
+                                                class="inline-flex items-center justify-center w-7 h-7 bg-blue-400 hover:bg-blue-500 text-white rounded transition"
                                                 title="Edit"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
