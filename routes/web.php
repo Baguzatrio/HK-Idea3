@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DivisiController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
 use App\Models\Divisi;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -48,22 +50,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('divisis', DivisiController::class)->except(['create', 'edit', 'show']);
 
     // Master Data - Role (mockup)
-    Route::get('/roles', function () {
-        return Inertia::render('MasterData/Role/Index', [
-            'roles'       => [],
-            'permissions' => [],
-        ]);
-    })->name('roles.index');
+   Route::resource('roles', RoleController::class)->except(['create', 'edit', 'show']);
 
     // Master Data - Permission (mockup)
-    Route::get('/permissions', function () {
-        $divisis = Divisi::orderBy('nama')->get(['id', 'nama']);
-
-        return Inertia::render('MasterData/Permission/Index', [
-            'permissions' => [],
-            'divisis'     => $divisis,
-        ]);
-    })->name('permissions.index');
+    Route::resource('permissions', PermissionController::class)->except(['create', 'edit', 'show']);
 
 });
 
