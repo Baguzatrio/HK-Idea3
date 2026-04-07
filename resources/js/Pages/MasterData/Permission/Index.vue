@@ -5,15 +5,20 @@ import { ref, computed } from 'vue';
 
 interface Divisi {
     id: number;
-    kode: string;
     nama: string;
-    lantai: number | null;
-    logo: string | null;
-    url: string | null;
-    no_urut: number;
+}
+
+interface Permission {
+    id: number;
+    nama: string;
+    nama_divisi: string;
+    judul_report: string;
+    nama_report: string;
+    link_dashboard: string;
 }
 
 const props = defineProps<{
+    permissions: Permission[];
     divisis: Divisi[];
 }>();
 
@@ -24,10 +29,11 @@ const currentPage = ref(1);
 
 const filtered = computed(() => {
     const q = search.value.toLowerCase();
-    return props.divisis.filter(d =>
-        d.kode.toLowerCase().includes(q) ||
-        d.nama.toLowerCase().includes(q) ||
-        (d.url ?? '').toLowerCase().includes(q)
+    return props.permissions.filter(p =>
+        p.nama.toLowerCase().includes(q) ||
+        p.nama_divisi.toLowerCase().includes(q) ||
+        p.judul_report.toLowerCase().includes(q) ||
+        p.nama_report.toLowerCase().includes(q)
     );
 });
 
@@ -44,87 +50,79 @@ const resetPage = () => { currentPage.value = 1; };
 const showAddModal = ref(false);
 
 const addForm = useForm({
-    kode: '',
     nama: '',
-    lantai: '',
-    logo: null as File | null,
-    url: '',
-    no_urut: '',
+    divisi_id: '',
+    judul_report: '',
+    nama_report: '',
+    link_dashboard: '',
 });
 
-const onLogoChange = (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
-    addForm.logo = file;
-};
-
 const submitAdd = () => {
-    addForm.post(route('divisis.store'), {
-        forceFormData: true,
+    addForm.post(route('permissions.store'), {
         onSuccess: () => {
             showAddModal.value = false;
             addForm.reset();
-            router.reload({ only: ['divisis'] });
+            router.reload({ only: ['permissions'] });
         },
     });
 };
 
 // ── Modal Edit ───────────────────────────────────────────────
 const showEditModal = ref(false);
-const editingDivisi = ref<Divisi | null>(null);
+const editingPermission = ref<Permission | null>(null);
 
 const editForm = useForm({
-    kode: '',
     nama: '',
-    lantai: '',
-    logo: null as File | null,
-    url: '',
-    no_urut: '',
-    _method: 'PUT',
+    divisi_id: '',
+    judul_report: '',
+    nama_report: '',
+    link_dashboard: '',
 });
 
-const openEdit = (divisi: Divisi) => {
-    editingDivisi.value = divisi;
-    editForm.kode    = divisi.kode;
-    editForm.nama    = divisi.nama;
-    editForm.lantai  = divisi.lantai?.toString() ?? '';
-    editForm.url     = divisi.url ?? '';
-    editForm.no_urut = divisi.no_urut.toString();
-    editForm.logo    = null;
+const openEdit = (permission: Permission) => {
+    editingPermission.value = permission;
+    editForm.nama           = permission.nama;
+    editForm.judul_report   = permission.judul_report;
+    editForm.nama_report    = permission.nama_report;
+    editForm.link_dashboard = permission.link_dashboard;
     showEditModal.value = true;
 };
 
-const onEditLogoChange = (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
-    editForm.logo = file;
-};
-
 const submitEdit = () => {
-    if (!editingDivisi.value) return;
-    editForm.post(route('divisis.update', editingDivisi.value.id), {
-        forceFormData: true,
+    if (!editingPermission.value) return;
+    editForm.put(route('permissions.update', editingPermission.value.id), {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
-            router.reload({ only: ['divisis'] });
+            router.reload({ only: ['permissions'] });
         },
     });
 };
 
 // ── Delete ───────────────────────────────────────────────────
 const confirmDelete = (id: number) => {
-    if (confirm('Yakin ingin menghapus divisi ini?')) {
-        router.delete(route('divisis.destroy', id));
+    if (confirm('Yakin ingin menghapus permission ini?')) {
+        router.delete(route('permissions.destroy', id));
     }
+};
+
+// ── Preview iframe ───────────────────────────────────────────
+const previewUrl = ref('');
+const showPreview = ref(false);
+
+const openPreview = (url: string) => {
+    previewUrl.value = url;
+    showPreview.value = true;
 };
 </script>
 
 <template>
-    <Head title="Master Data - Divisi" />
+    <Head title="Master Data - Permission" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Master Data — Divisi
+                Master Data — Permission
             </h2>
         </template>
 
@@ -154,7 +152,7 @@ const confirmDelete = (id: number) => {
                                 v-model="search"
                                 @input="resetPage"
                                 type="text"
-                                placeholder="Cari kode, nama, url..."
+                                placeholder="Cari nama, divisi, report..."
                                 class="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
@@ -166,7 +164,7 @@ const confirmDelete = (id: number) => {
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
-                            Tambah Divisi
+                            Tambah Permission
                         </button>
                     </div>
 
@@ -177,24 +175,23 @@ const confirmDelete = (id: number) => {
                                 <tr>
                                     <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider w-10">#</th>
                                     <th class="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider w-20">Aksi</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Kode</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Nama</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Lantai</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Logo</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">URL</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">No Urut</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Nama Permission</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Nama Divisi</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Judul Report</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Nama Report</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Link Dashboard</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100">
                                 <tr v-if="paginated.length === 0">
-                                    <td colspan="8" class="px-6 py-10 text-center text-gray-400">
+                                    <td colspan="7" class="px-6 py-10 text-center text-gray-400">
                                         Tidak ada data yang ditemukan.
                                     </td>
                                 </tr>
 
                                 <tr
-                                    v-for="(divisi, index) in paginated"
-                                    :key="divisi.id"
+                                    v-for="(permission, index) in paginated"
+                                    :key="permission.id"
                                     class="hover:bg-gray-50 transition"
                                 >
                                     <td class="px-4 py-4 text-gray-400">
@@ -204,7 +201,7 @@ const confirmDelete = (id: number) => {
                                     <td class="px-4 py-4">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <button
-                                                @click="openEdit(divisi)"
+                                                @click="openEdit(permission)"
                                                 class="inline-flex items-center justify-center w-7 h-7 bg-blue-400 hover:bg-blue-500 text-white rounded transition"
                                                 title="Edit"
                                             >
@@ -213,7 +210,7 @@ const confirmDelete = (id: number) => {
                                                 </svg>
                                             </button>
                                             <button
-                                                @click="confirmDelete(divisi.id)"
+                                                @click="confirmDelete(permission.id)"
                                                 class="inline-flex items-center justify-center w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded transition"
                                                 title="Hapus"
                                             >
@@ -224,25 +221,25 @@ const confirmDelete = (id: number) => {
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-4 font-mono text-gray-700">{{ divisi.kode }}</td>
-                                    <td class="px-4 py-4 font-medium text-gray-800">{{ divisi.nama }}</td>
-                                    <td class="px-4 py-4 text-gray-600">{{ divisi.lantai ?? '-' }}</td>
+                                    <td class="px-4 py-4 font-medium text-gray-800">{{ permission.nama }}</td>
+                                    <td class="px-4 py-4 text-gray-600">{{ permission.nama_divisi }}</td>
+                                    <td class="px-4 py-4 text-gray-600">{{ permission.judul_report }}</td>
+                                    <td class="px-4 py-4 text-gray-600">{{ permission.nama_report }}</td>
                                     <td class="px-4 py-4">
-                                        <img
-                                            v-if="divisi.logo"
-                                            :src="`/storage/${divisi.logo}`"
-                                            :alt="divisi.nama"
-                                            class="h-8 w-auto object-contain"
-                                        />
-                                        <span v-else class="text-gray-400">-</span>
+                                        <button
+                                            v-if="permission.link_dashboard"
+                                            @click="openPreview(permission.link_dashboard)"
+                                            class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium transition"
+                                            title="Preview Dashboard"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            Preview
+                                        </button>
+                                        <span v-else class="text-gray-400 text-xs">-</span>
                                     </td>
-                                    <td class="px-4 py-4 text-blue-600">
-                                        <a v-if="divisi.url" :href="divisi.url" target="_blank" class="hover:underline truncate max-w-xs block">
-                                            {{ divisi.url }}
-                                        </a>
-                                        <span v-else class="text-gray-400">-</span>
-                                    </td>
-                                    <td class="px-4 py-4 text-gray-600">{{ divisi.no_urut }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -293,7 +290,7 @@ const confirmDelete = (id: number) => {
                 <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showAddModal = false">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Tambah Divisi</h3>
+                            <h3 class="text-lg font-semibold text-gray-800">Tambah Permission</h3>
                             <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-600 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -302,41 +299,37 @@ const confirmDelete = (id: number) => {
                         </div>
 
                         <div class="px-6 py-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                                    <input v-model="addForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cth: DIV001" />
-                                    <p v-if="addForm.errors.kode" class="text-red-500 text-xs mt-1">{{ addForm.errors.kode }}</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
-                                    <input v-model="addForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
-                                    <p v-if="addForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ addForm.errors.no_urut }}</p>
-                                </div>
-                            </div>
-
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
-                                <input v-model="addForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama divisi" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Permission <span class="text-red-500">*</span></label>
+                                <input v-model="addForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cth: view-dashboard-akuntansi" />
                                 <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
-                                <input v-model="addForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nomor lantai" />
-                                <p v-if="addForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ addForm.errors.lantai }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                <select v-model="addForm.divisi_id" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Pilih Divisi --</option>
+                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama }}</option>
+                                </select>
+                                <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{ addForm.errors.divisi_id }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input v-model="addForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-                                <p v-if="addForm.errors.url" class="text-red-500 text-xs mt-1">{{ addForm.errors.url }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Report</label>
+                                <input v-model="addForm.judul_report" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Judul laporan" />
+                                <p v-if="addForm.errors.judul_report" class="text-red-500 text-xs mt-1">{{ addForm.errors.judul_report }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                <input @change="onLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="addForm.errors.logo" class="text-red-500 text-xs mt-1">{{ addForm.errors.logo }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Report</label>
+                                <input v-model="addForm.nama_report" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama laporan" />
+                                <p v-if="addForm.errors.nama_report" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama_report }}</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Dashboard (iframe)</label>
+                                <input v-model="addForm.link_dashboard" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
+                                <p v-if="addForm.errors.link_dashboard" class="text-red-500 text-xs mt-1">{{ addForm.errors.link_dashboard }}</p>
                             </div>
                         </div>
 
@@ -357,7 +350,7 @@ const confirmDelete = (id: number) => {
                 <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showEditModal = false">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Edit Divisi</h3>
+                            <h3 class="text-lg font-semibold text-gray-800">Edit Permission</h3>
                             <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -366,45 +359,37 @@ const confirmDelete = (id: number) => {
                         </div>
 
                         <div class="px-6 py-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                                    <input v-model="editForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                    <p v-if="editForm.errors.kode" class="text-red-500 text-xs mt-1">{{ editForm.errors.kode }}</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
-                                    <input v-model="editForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                    <p v-if="editForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ editForm.errors.no_urut }}</p>
-                                </div>
-                            </div>
-
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Permission <span class="text-red-500">*</span></label>
                                 <input v-model="editForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
-                                <input v-model="editForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ editForm.errors.lantai }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                <select v-model="editForm.divisi_id" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Pilih Divisi --</option>
+                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama }}</option>
+                                </select>
+                                <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{ editForm.errors.divisi_id }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input v-model="editForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.url" class="text-red-500 text-xs mt-1">{{ editForm.errors.url }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Report</label>
+                                <input v-model="editForm.judul_report" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <p v-if="editForm.errors.judul_report" class="text-red-500 text-xs mt-1">{{ editForm.errors.judul_report }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                <div v-if="editingDivisi?.logo" class="mb-2">
-                                    <img :src="`/storage/${editingDivisi.logo}`" class="h-10 w-auto object-contain" alt="Logo saat ini" />
-                                    <p class="text-xs text-gray-400 mt-1">Upload baru untuk mengganti logo</p>
-                                </div>
-                                <input @change="onEditLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.logo" class="text-red-500 text-xs mt-1">{{ editForm.errors.logo }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Report</label>
+                                <input v-model="editForm.nama_report" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <p v-if="editForm.errors.nama_report" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama_report }}</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Dashboard (iframe)</label>
+                                <input v-model="editForm.link_dashboard" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <p v-if="editForm.errors.link_dashboard" class="text-red-500 text-xs mt-1">{{ editForm.errors.link_dashboard }}</p>
                             </div>
                         </div>
 
@@ -414,6 +399,25 @@ const confirmDelete = (id: number) => {
                                 {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
                             </button>
                         </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- ── Modal Preview iframe ── -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                <div v-if="showPreview" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showPreview = false">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl mx-4 overflow-hidden">
+                        <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-gray-50">
+                            <span class="text-sm font-medium text-gray-700">Preview Dashboard</span>
+                            <button @click="showPreview = false" class="text-gray-400 hover:text-gray-600 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <iframe :src="previewUrl" class="w-full" style="height: 70vh; border: none;" allowfullscreen />
                     </div>
                 </div>
             </Transition>

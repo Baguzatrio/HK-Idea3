@@ -54,11 +54,16 @@
       </div>
 
     </div>
+    
 
     <!-- Bottom bar -->
     <div class="footer-bottom">
       <div class="footer-bottom-line"></div>
     </div>
+    
+        <p class="text-center text-sm text-gray-400 py-6">
+          &copy; 2026 PT Hutama Karya (Persero). All rights reserved.
+        </p>
   </footer>
 </template>
 

@@ -59,10 +59,10 @@ const showingNavigationDropdown = ref(false);
                                             <DropdownLink :href="route('divisis.index')">
                                                 Divisi
                                             </DropdownLink>
-                                            <DropdownLink :href="route('profile.edit')">
+                                            <DropdownLink :href="route('permissions.index')">
                                                 Permission
                                             </DropdownLink>
-                                            <DropdownLink :href="route('profile.edit')">
+                                            <DropdownLink :href="route('roles.index')">
                                                 Role
                                             </DropdownLink>
                                         </template>

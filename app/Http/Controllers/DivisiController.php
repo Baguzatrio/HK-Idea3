@@ -63,7 +63,7 @@ class DivisiController extends Controller
             'nama'    => 'required|string|max:255',
             'lantai'  => 'nullable|integer',
             'logo'    => 'nullable|image|max:2048',
-            'url'     => 'nullable|url',
+            'url'     => 'nullable|string|max:255',
             'no_urut' => 'nullable|integer',
         ]);
 

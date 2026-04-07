@@ -79,7 +79,7 @@ const confirmDelete = (id: number) => {
             </h2>
         </template>
 
-        <div class="py-10">
+        <div class="py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="bg-white shadow rounded-lg overflow-hidden">
 
@@ -89,7 +89,7 @@ const confirmDelete = (id: number) => {
                             <div class="flex items-center gap-2 text-sm text-gray-600">
                                 <span>Tampilkan</span>
                                 <select v-model="perPage" @change="resetPage"
-                                    class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="border border-gray-300 rounded-md px-2 py-1 w-14 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option :value="10">10</option>
                                     <option :value="20">20</option>
                                     <option :value="50">50</option>

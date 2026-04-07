@@ -3,18 +3,20 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
-interface Divisi {
+interface Permission {
     id: number;
-    kode: string;
     nama: string;
-    lantai: number | null;
-    logo: string | null;
-    url: string | null;
-    no_urut: number;
+}
+
+interface Role {
+    id: number;
+    nama: string;
+    permissions: Permission[];
 }
 
 const props = defineProps<{
-    divisis: Divisi[];
+    roles: Role[];
+    permissions: Permission[];
 }>();
 
 // ── Search & Pagination ──────────────────────────────────────
@@ -24,11 +26,7 @@ const currentPage = ref(1);
 
 const filtered = computed(() => {
     const q = search.value.toLowerCase();
-    return props.divisis.filter(d =>
-        d.kode.toLowerCase().includes(q) ||
-        d.nama.toLowerCase().includes(q) ||
-        (d.url ?? '').toLowerCase().includes(q)
-    );
+    return props.roles.filter(r => r.nama.toLowerCase().includes(q));
 });
 
 const totalPages = computed(() => Math.ceil(filtered.value.length / perPage.value));
@@ -44,87 +42,74 @@ const resetPage = () => { currentPage.value = 1; };
 const showAddModal = ref(false);
 
 const addForm = useForm({
-    kode: '',
     nama: '',
-    lantai: '',
-    logo: null as File | null,
-    url: '',
-    no_urut: '',
+    permissions: [] as number[],
 });
 
-const onLogoChange = (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
-    addForm.logo = file;
-};
-
 const submitAdd = () => {
-    addForm.post(route('divisis.store'), {
-        forceFormData: true,
+    addForm.post(route('roles.store'), {
         onSuccess: () => {
             showAddModal.value = false;
             addForm.reset();
-            router.reload({ only: ['divisis'] });
+            router.reload({ only: ['roles'] });
         },
     });
 };
 
+const toggleAddPermission = (id: number) => {
+    const idx = addForm.permissions.indexOf(id);
+    if (idx === -1) addForm.permissions.push(id);
+    else addForm.permissions.splice(idx, 1);
+};
+
 // ── Modal Edit ───────────────────────────────────────────────
 const showEditModal = ref(false);
-const editingDivisi = ref<Divisi | null>(null);
+const editingRole = ref<Role | null>(null);
 
 const editForm = useForm({
-    kode: '',
     nama: '',
-    lantai: '',
-    logo: null as File | null,
-    url: '',
-    no_urut: '',
-    _method: 'PUT',
+    permissions: [] as number[],
 });
 
-const openEdit = (divisi: Divisi) => {
-    editingDivisi.value = divisi;
-    editForm.kode    = divisi.kode;
-    editForm.nama    = divisi.nama;
-    editForm.lantai  = divisi.lantai?.toString() ?? '';
-    editForm.url     = divisi.url ?? '';
-    editForm.no_urut = divisi.no_urut.toString();
-    editForm.logo    = null;
+const openEdit = (role: Role) => {
+    editingRole.value = role;
+    editForm.nama = role.nama;
+    editForm.permissions = role.permissions.map(p => p.id);
     showEditModal.value = true;
 };
 
-const onEditLogoChange = (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
-    editForm.logo = file;
+const toggleEditPermission = (id: number) => {
+    const idx = editForm.permissions.indexOf(id);
+    if (idx === -1) editForm.permissions.push(id);
+    else editForm.permissions.splice(idx, 1);
 };
 
 const submitEdit = () => {
-    if (!editingDivisi.value) return;
-    editForm.post(route('divisis.update', editingDivisi.value.id), {
-        forceFormData: true,
+    if (!editingRole.value) return;
+    editForm.put(route('roles.update', editingRole.value.id), {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
-            router.reload({ only: ['divisis'] });
+            router.reload({ only: ['roles'] });
         },
     });
 };
 
 // ── Delete ───────────────────────────────────────────────────
 const confirmDelete = (id: number) => {
-    if (confirm('Yakin ingin menghapus divisi ini?')) {
-        router.delete(route('divisis.destroy', id));
+    if (confirm('Yakin ingin menghapus role ini?')) {
+        router.delete(route('roles.destroy', id));
     }
 };
 </script>
 
 <template>
-    <Head title="Master Data - Divisi" />
+    <Head title="Master Data - Role" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Master Data — Divisi
+                Master Data — Role
             </h2>
         </template>
 
@@ -140,7 +125,7 @@ const confirmDelete = (id: number) => {
                                 <select
                                     v-model="perPage"
                                     @change="resetPage"
-                                    class="border border-gray-300 rounded-md px-2 py-1 w-14 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    class="border border-gray-300 rounded-md px-2 py-1 text-sm w-14 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option :value="10">10</option>
                                     <option :value="20">20</option>
@@ -154,7 +139,7 @@ const confirmDelete = (id: number) => {
                                 v-model="search"
                                 @input="resetPage"
                                 type="text"
-                                placeholder="Cari kode, nama, url..."
+                                placeholder="Cari nama role..."
                                 class="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
@@ -166,7 +151,7 @@ const confirmDelete = (id: number) => {
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
-                            Tambah Divisi
+                            Tambah Role
                         </button>
                     </div>
 
@@ -177,24 +162,21 @@ const confirmDelete = (id: number) => {
                                 <tr>
                                     <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider w-10">#</th>
                                     <th class="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider w-20">Aksi</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Kode</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Nama</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Lantai</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Logo</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">URL</th>
-                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">No Urut</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Nama Role</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Permission</th>
+                                    <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider w-28">Jumlah Permission</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100">
                                 <tr v-if="paginated.length === 0">
-                                    <td colspan="8" class="px-6 py-10 text-center text-gray-400">
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-400">
                                         Tidak ada data yang ditemukan.
                                     </td>
                                 </tr>
 
                                 <tr
-                                    v-for="(divisi, index) in paginated"
-                                    :key="divisi.id"
+                                    v-for="(role, index) in paginated"
+                                    :key="role.id"
                                     class="hover:bg-gray-50 transition"
                                 >
                                     <td class="px-4 py-4 text-gray-400">
@@ -204,7 +186,7 @@ const confirmDelete = (id: number) => {
                                     <td class="px-4 py-4">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <button
-                                                @click="openEdit(divisi)"
+                                                @click="openEdit(role)"
                                                 class="inline-flex items-center justify-center w-7 h-7 bg-blue-400 hover:bg-blue-500 text-white rounded transition"
                                                 title="Edit"
                                             >
@@ -213,7 +195,7 @@ const confirmDelete = (id: number) => {
                                                 </svg>
                                             </button>
                                             <button
-                                                @click="confirmDelete(divisi.id)"
+                                                @click="confirmDelete(role.id)"
                                                 class="inline-flex items-center justify-center w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded transition"
                                                 title="Hapus"
                                             >
@@ -224,25 +206,32 @@ const confirmDelete = (id: number) => {
                                         </div>
                                     </td>
 
-                                    <td class="px-4 py-4 font-mono text-gray-700">{{ divisi.kode }}</td>
-                                    <td class="px-4 py-4 font-medium text-gray-800">{{ divisi.nama }}</td>
-                                    <td class="px-4 py-4 text-gray-600">{{ divisi.lantai ?? '-' }}</td>
+                                    <td class="px-4 py-4 font-medium text-gray-800">{{ role.nama }}</td>
+
                                     <td class="px-4 py-4">
-                                        <img
-                                            v-if="divisi.logo"
-                                            :src="`/storage/${divisi.logo}`"
-                                            :alt="divisi.nama"
-                                            class="h-8 w-auto object-contain"
-                                        />
-                                        <span v-else class="text-gray-400">-</span>
+                                        <div class="flex flex-wrap gap-1">
+                                            <span
+                                                v-for="perm in role.permissions.slice(0, 3)"
+                                                :key="perm.id"
+                                                class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full"
+                                            >
+                                                {{ perm.nama }}
+                                            </span>
+                                            <span
+                                                v-if="role.permissions.length > 3"
+                                                class="inline-block bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full"
+                                            >
+                                                +{{ role.permissions.length - 3 }} lainnya
+                                            </span>
+                                            <span v-if="role.permissions.length === 0" class="text-gray-400 text-xs">-</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-4 text-blue-600">
-                                        <a v-if="divisi.url" :href="divisi.url" target="_blank" class="hover:underline truncate max-w-xs block">
-                                            {{ divisi.url }}
-                                        </a>
-                                        <span v-else class="text-gray-400">-</span>
+
+                                    <td class="px-4 py-4">
+                                        <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                            {{ role.permissions.length }}
+                                        </span>
                                     </td>
-                                    <td class="px-4 py-4 text-gray-600">{{ divisi.no_urut }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -287,13 +276,13 @@ const confirmDelete = (id: number) => {
             </div>
         </div>
 
-        <!-- ── Modal Tambah ── -->
+        <!-- ── Modal Tambah Role ── -->
         <Teleport to="body">
             <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
                 <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showAddModal = false">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Tambah Divisi</h3>
+                            <h3 class="text-lg font-semibold text-gray-800">Tambah Role</h3>
                             <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-600 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -302,41 +291,39 @@ const confirmDelete = (id: number) => {
                         </div>
 
                         <div class="px-6 py-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                                    <input v-model="addForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cth: DIV001" />
-                                    <p v-if="addForm.errors.kode" class="text-red-500 text-xs mt-1">{{ addForm.errors.kode }}</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
-                                    <input v-model="addForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
-                                    <p v-if="addForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ addForm.errors.no_urut }}</p>
-                                </div>
-                            </div>
-
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
-                                <input v-model="addForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama divisi" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role <span class="text-red-500">*</span></label>
+                                <input
+                                    v-model="addForm.nama"
+                                    type="text"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Cth: Admin Akuntansi"
+                                />
                                 <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
-                                <input v-model="addForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nomor lantai" />
-                                <p v-if="addForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ addForm.errors.lantai }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input v-model="addForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-                                <p v-if="addForm.errors.url" class="text-red-500 text-xs mt-1">{{ addForm.errors.url }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                <input @change="onLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="addForm.errors.logo" class="text-red-500 text-xs mt-1">{{ addForm.errors.logo }}</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Permission</label>
+                                <div v-if="permissions.length === 0" class="text-sm text-gray-400 italic">
+                                    Belum ada permission tersedia.
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                    <label
+                                        v-for="perm in permissions"
+                                        :key="perm.id"
+                                        class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-blue-900"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :value="perm.id"
+                                            :checked="addForm.permissions.includes(perm.id)"
+                                            @change="toggleAddPermission(perm.id)"
+                                            class="rounded border-gray-300 text-blue-900 focus:ring-blue-500"
+                                        />
+                                        {{ perm.nama }}
+                                    </label>
+                                </div>
+                                <p v-if="addForm.errors.permissions" class="text-red-500 text-xs mt-1">{{ addForm.errors.permissions }}</p>
                             </div>
                         </div>
 
@@ -351,13 +338,13 @@ const confirmDelete = (id: number) => {
             </Transition>
         </Teleport>
 
-        <!-- ── Modal Edit ── -->
+        <!-- ── Modal Edit Role ── -->
         <Teleport to="body">
             <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
                 <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showEditModal = false">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Edit Divisi</h3>
+                            <h3 class="text-lg font-semibold text-gray-800">Edit Role</h3>
                             <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -366,45 +353,38 @@ const confirmDelete = (id: number) => {
                         </div>
 
                         <div class="px-6 py-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                                    <input v-model="editForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                    <p v-if="editForm.errors.kode" class="text-red-500 text-xs mt-1">{{ editForm.errors.kode }}</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
-                                    <input v-model="editForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                    <p v-if="editForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ editForm.errors.no_urut }}</p>
-                                </div>
-                            </div>
-
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
-                                <input v-model="editForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role <span class="text-red-500">*</span></label>
+                                <input
+                                    v-model="editForm.nama"
+                                    type="text"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                                 <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama }}</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
-                                <input v-model="editForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ editForm.errors.lantai }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input v-model="editForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.url" class="text-red-500 text-xs mt-1">{{ editForm.errors.url }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                <div v-if="editingDivisi?.logo" class="mb-2">
-                                    <img :src="`/storage/${editingDivisi.logo}`" class="h-10 w-auto object-contain" alt="Logo saat ini" />
-                                    <p class="text-xs text-gray-400 mt-1">Upload baru untuk mengganti logo</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Permission</label>
+                                <div v-if="permissions.length === 0" class="text-sm text-gray-400 italic">
+                                    Belum ada permission tersedia.
                                 </div>
-                                <input @change="onEditLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.logo" class="text-red-500 text-xs mt-1">{{ editForm.errors.logo }}</p>
+                                <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                    <label
+                                        v-for="perm in permissions"
+                                        :key="perm.id"
+                                        class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-blue-900"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :value="perm.id"
+                                            :checked="editForm.permissions.includes(perm.id)"
+                                            @change="toggleEditPermission(perm.id)"
+                                            class="rounded border-gray-300 text-blue-900 focus:ring-blue-500"
+                                        />
+                                        {{ perm.nama }}
+                                    </label>
+                                </div>
+                                <p v-if="editForm.errors.permissions" class="text-red-500 text-xs mt-1">{{ editForm.errors.permissions }}</p>
                             </div>
                         </div>
 
