@@ -207,16 +207,14 @@ const confirmDelete = (id: number) => {
                                     <td class="px-4 py-4">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <!-- Edit -->
-                                            <button @click="openEdit(user)"
-                                            class="inline-flex items-center justify-center w-7 h-7 bg-blue-400
-                                            hover:bg-blue-500 text-white rounded transition"
-                                            title="Edit"
-                                            >
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
+                                            <button @click="openEdit(user)" class="inline-flex items-center justify-center w-7 h-7 bg-blue-400
+                                            hover:bg-blue-500 text-white rounded transition" title="Edit">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
                                             </button>
 
                                             <!-- Hapus -->
@@ -253,8 +251,8 @@ const confirmDelete = (id: number) => {
                         <span>
                             Menampilkan
                             {{ filtered.length === 0 ? 0 : (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage *
-                            perPage,
-                            filtered.length) }}
+                                perPage,
+                                filtered.length) }}
                             dari {{ filtered.length }} entri
                         </span>
 
@@ -305,7 +303,8 @@ const confirmDelete = (id: number) => {
                                 <input v-model="addForm.name" type="text"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Nama lengkap" />
-                                <p v-if="addForm.errors.name" class="text-red-500 text-xs mt-1">{{ addForm.errors.name }}</p>
+                                <p v-if="addForm.errors.name" class="text-red-500 text-xs mt-1">{{ addForm.errors.name
+                                    }}</p>
                             </div>
 
                             <div>
@@ -313,7 +312,8 @@ const confirmDelete = (id: number) => {
                                 <input v-model="addForm.email" type="email"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="email@example.com" />
-                                <p v-if="addForm.errors.email" class="text-red-500 text-xs mt-1">{{ addForm.errors.email }}
+                                <p v-if="addForm.errors.email" class="text-red-500 text-xs mt-1">{{ addForm.errors.email
+                                    }}
                                 </p>
                             </div>
 
@@ -322,18 +322,23 @@ const confirmDelete = (id: number) => {
                                 <input v-model="addForm.password" type="password"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Password" />
-                                <p v-if="addForm.errors.password" class="text-red-500 text-xs mt-1">{{ addForm.errors.password
+                                <p v-if="addForm.errors.password" class="text-red-500 text-xs mt-1">{{
+                                    addForm.errors.password
                                     }}</p>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
                                 <select v-model="addForm.divisi_id"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Tidak ada divisi --</option>
-                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama }}</option>
+                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                        }}
+                                    </option>
                                 </select>
-                                <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{ addForm.errors.divisi_id }}</p>
+                                <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
+                                    addForm.errors.divisi_id
+                                    }}</p>
                             </div>
 
                             <div>
@@ -341,9 +346,11 @@ const confirmDelete = (id: number) => {
                                 <select v-model="addForm.role"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Tidak ada role --</option>
-                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
+                                    </option>
                                 </select>
-                                <p v-if="addForm.errors.role" class="text-red-500 text-xs mt-1">{{ addForm.errors.role }}</p>
+                                <p v-if="addForm.errors.role" class="text-red-500 text-xs mt-1">{{ addForm.errors.role
+                                    }}</p>
                             </div>
                         </div>
 
@@ -390,7 +397,8 @@ const confirmDelete = (id: number) => {
                                 <input v-model="editForm.name" type="text"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Nama lengkap" />
-                                <p v-if="editForm.errors.name" class="text-red-500 text-xs mt-1">{{ editForm.errors.name }}</p>
+                                <p v-if="editForm.errors.name" class="text-red-500 text-xs mt-1">{{ editForm.errors.name
+                                    }}</p>
                             </div>
 
                             <div>
@@ -398,7 +406,8 @@ const confirmDelete = (id: number) => {
                                 <input v-model="editForm.email" type="email"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="email@example.com" />
-                                <p v-if="editForm.errors.email" class="text-red-500 text-xs mt-1">{{ editForm.errors.email }}
+                                <p v-if="editForm.errors.email" class="text-red-500 text-xs mt-1">{{
+                                    editForm.errors.email }}
                                 </p>
                             </div>
 
@@ -407,18 +416,22 @@ const confirmDelete = (id: number) => {
                                 <input v-model="editForm.password" type="password"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Kosongkan jika tidak ingin mengubah password" />
-                                <p v-if="editForm.errors.password" class="text-red-500 text-xs mt-1">{{ editForm.errors.password
+                                <p v-if="editForm.errors.password" class="text-red-500 text-xs mt-1">{{
+                                    editForm.errors.password
                                     }}</p>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
                                 <select v-model="editForm.divisi_id"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Tidak ada divisi --</option>
-                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama }}</option>
+                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                        }}
+                                    </option>
                                 </select>
-                                <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{ editForm.errors.divisi_id }}</p>
+                                <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
+                                    editForm.errors.divisi_id }}</p>
                             </div>
 
                             <div>
@@ -426,9 +439,11 @@ const confirmDelete = (id: number) => {
                                 <select v-model="editForm.role"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Tidak ada role --</option>
-                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
+                                    </option>
                                 </select>
-                                <p v-if="editForm.errors.role" class="text-red-500 text-xs mt-1">{{ editForm.errors.role }}</p>
+                                <p v-if="editForm.errors.role" class="text-red-500 text-xs mt-1">{{ editForm.errors.role
+                                    }}</p>
                             </div>
                         </div>
 
