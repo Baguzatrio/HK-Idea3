@@ -3,16 +3,29 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
+interface Divisi {
+    id: number;
+    nama: string;
+}
+
+interface Role {
+    id: number;
+    nama: string;
+}
+
 interface User {
     id: number;
     name: string;
     email: string;
     divisi: string;
+    divisi_id: number | null;
     role: string;
 }
 
 const props = defineProps<{
     users: User[];
+    divisis: Divisi[];
+    roles: Role[];
 }>();
 
 // ── Search & Pagination ──────────────────────────────────────
@@ -40,21 +53,55 @@ const paginated = computed(() => {
 const resetPage = () => { currentPage.value = 1; };
 
 // ── Modal Tambah User ────────────────────────────────────────
-const showModal = ref(false);
+const showAddModal = ref(false);
 
-const form = useForm({
+const addForm = useForm({
     name: '',
     email: '',
     password: '',
-    divisi_id: '',
+    divisi_id: '' as number | string,
+    role: '',
 });
 
 const submitAdd = () => {
-    console.log('form data:', form.data()); // ← tambahkan ini
-    form.post(route('users.store'), {
+    addForm.post(route('users.store'), {
         onSuccess: () => {
-            showModal.value = false;
-            form.reset();
+            showAddModal.value = false;
+            addForm.reset();
+            router.reload({ only: ['users'] });
+        },
+    });
+};
+
+// ── Modal Edit User ────────────────────────────────────────
+const showEditModal = ref(false);
+const editingUser = ref<User | null>(null);
+
+const editForm = useForm({
+    name: '',
+    email: '',
+    password: '',
+    divisi_id: '' as number | string,
+    role: '',
+    _method: 'PUT',
+});
+
+const openEdit = (user: User) => {
+    editingUser.value = user;
+    editForm.name = user.name;
+    editForm.email = user.email;
+    editForm.password = ''; // kosongkan kecuali mau diubah
+    editForm.divisi_id = user.divisi_id || '';
+    editForm.role = user.role !== '-' ? user.role : '';
+    showEditModal.value = true;
+};
+
+const submitEdit = () => {
+    if (!editingUser.value) return;
+    editForm.post(route('users.update', editingUser.value.id), {
+        onSuccess: () => {
+            showEditModal.value = false;
+            editForm.reset();
             router.reload({ only: ['users'] });
         },
     });
@@ -103,7 +150,7 @@ const confirmDelete = (id: number) => {
                                 class="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
 
-                        <button @click="showModal = true"
+                        <button @click="showAddModal = true"
                             class="inline-flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-md transition">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
@@ -160,7 +207,7 @@ const confirmDelete = (id: number) => {
                                     <td class="px-4 py-4">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <!-- Edit -->
-                                            <a :href="route('users.edit', user.id)"
+                                            <button @click="openEdit(user)"
                                             class="inline-flex items-center justify-center w-7 h-7 bg-blue-400
                                             hover:bg-blue-500 text-white rounded transition"
                                             title="Edit"
@@ -170,7 +217,7 @@ const confirmDelete = (id: number) => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
-                                            </a>
+                                            </button>
 
                                             <!-- Hapus -->
                                             <button @click="confirmDelete(user.id)"
@@ -236,13 +283,13 @@ const confirmDelete = (id: number) => {
             <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0"
                 enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150"
                 leave-from-class="opacity-100" leave-to-class="opacity-0">
-                <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                    @click.self="showModal = false">
+                <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    @click.self="showAddModal = false">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
                         <!-- Header -->
                         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-800">Tambah User Baru</h3>
-                            <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition">
+                            <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-600 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -255,40 +302,145 @@ const confirmDelete = (id: number) => {
                         <div class="px-6 py-5 space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                                <input v-model="form.name" type="text"
+                                <input v-model="addForm.name" type="text"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Nama lengkap" />
-                                <p v-if="form.errors.name" class="text-red-500 text-xs mt-1">{{ form.errors.name }}</p>
+                                <p v-if="addForm.errors.name" class="text-red-500 text-xs mt-1">{{ addForm.errors.name }}</p>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input v-model="form.email" type="email"
+                                <input v-model="addForm.email" type="email"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="email@example.com" />
-                                <p v-if="form.errors.email" class="text-red-500 text-xs mt-1">{{ form.errors.email }}
+                                <p v-if="addForm.errors.email" class="text-red-500 text-xs mt-1">{{ addForm.errors.email }}
                                 </p>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                <input v-model="form.password" type="password"
+                                <input v-model="addForm.password" type="password"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Password" />
-                                <p v-if="form.errors.password" class="text-red-500 text-xs mt-1">{{ form.errors.password
+                                <p v-if="addForm.errors.password" class="text-red-500 text-xs mt-1">{{ addForm.errors.password
                                     }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                <select v-model="addForm.divisi_id"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Tidak ada divisi --</option>
+                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama }}</option>
+                                </select>
+                                <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{ addForm.errors.divisi_id }}</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select v-model="addForm.role"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Tidak ada role --</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}</option>
+                                </select>
+                                <p v-if="addForm.errors.role" class="text-red-500 text-xs mt-1">{{ addForm.errors.role }}</p>
                             </div>
                         </div>
 
                         <!-- Footer -->
                         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showModal = false"
+                            <button @click="showAddModal = false"
                                 class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
                                 Batal
                             </button>
-                            <button @click="submitAdd" :disabled="form.processing"
+                            <button @click="submitAdd" :disabled="addForm.processing"
                                 class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ form.processing ? 'Menyimpan...' : 'Simpan' }}
+                                {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- ── Modal Edit User ── -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0"
+                enter-to-class="opacity-100" leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100" leave-to-class="opacity-0">
+                <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    @click.self="showEditModal = false">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Edit User</h3>
+                            <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Body -->
+                        <div class="px-6 py-5 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                                <input v-model="editForm.name" type="text"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Nama lengkap" />
+                                <p v-if="editForm.errors.name" class="text-red-500 text-xs mt-1">{{ editForm.errors.name }}</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input v-model="editForm.email" type="email"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="email@example.com" />
+                                <p v-if="editForm.errors.email" class="text-red-500 text-xs mt-1">{{ editForm.errors.email }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input v-model="editForm.password" type="password"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Kosongkan jika tidak ingin mengubah password" />
+                                <p v-if="editForm.errors.password" class="text-red-500 text-xs mt-1">{{ editForm.errors.password
+                                    }}</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                <select v-model="editForm.divisi_id"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Tidak ada divisi --</option>
+                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama }}</option>
+                                </select>
+                                <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{ editForm.errors.divisi_id }}</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select v-model="editForm.role"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Tidak ada role --</option>
+                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}</option>
+                                </select>
+                                <p v-if="editForm.errors.role" class="text-red-500 text-xs mt-1">{{ editForm.errors.role }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                            <button @click="showEditModal = false"
+                                class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
+                                Batal
+                            </button>
+                            <button @click="submitEdit" :disabled="editForm.processing"
+                                class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                {{ editForm.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
                             </button>
                         </div>
                     </div>

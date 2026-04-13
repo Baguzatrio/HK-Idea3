@@ -119,6 +119,7 @@ const selectPermission = (permission: Permission) => {
                         >
                             <div v-if="activePermission && activePermission.link_dashboard" class="border-t border-gray-100 mt-2">
                                 <iframe
+                                    :key="activePermission.id"
                                     :src="activePermission.link_dashboard"
                                     :title="activePermission.nama_report"
                                     class="w-full"

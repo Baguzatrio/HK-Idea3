@@ -34,7 +34,7 @@ const showingNavigationDropdown = ref(false);
                                     <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
                                         Dashboard
                                     </NavLink>
-                                    <div class="relative">
+                                    <div class="relative" v-if="$page.props.auth.is_super_admin">
                                          <Dropdown>
                                         <template #trigger>
                                             <span class="inline-flex rounded-md">
