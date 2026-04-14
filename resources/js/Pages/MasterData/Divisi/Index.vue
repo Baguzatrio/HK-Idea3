@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import Swal from 'sweetalert2';
 
 interface Divisi {
     id: number;
@@ -63,6 +64,7 @@ const submitAdd = () => {
         onSuccess: () => {
             showAddModal.value = false;
             addForm.reset();
+            Swal.fire('Berhasil!', 'Data divisi berhasil ditambahkan.', 'success');
             router.reload({ only: ['divisis'] });
         },
     });
@@ -105,6 +107,7 @@ const submitEdit = () => {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
+            Swal.fire('Berhasil!', 'Data divisi berhasil diperbarui.', 'success');
             router.reload({ only: ['divisis'] });
         },
     });
@@ -112,9 +115,28 @@ const submitEdit = () => {
 
 // ── Delete ───────────────────────────────────────────────────
 const confirmDelete = (id: number) => {
-    if (confirm('Yakin ingin menghapus divisi ini?')) {
-        router.delete(route('divisis.destroy', id));
-    }
+    Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Data divisi yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('divisis.destroy', id), {
+                onSuccess: () => {
+                    Swal.fire(
+                        'Terhapus!',
+                        'Data divisi berhasil dihapus.',
+                        'success'
+                    )
+                }
+            });
+        }
+    });
 };
 </script>
 
@@ -301,51 +323,53 @@ const confirmDelete = (id: number) => {
                             </button>
                         </div>
 
-                        <div class="px-6 py-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                                    <input v-model="addForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cth: DIV001" />
-                                    <p v-if="addForm.errors.kode" class="text-red-500 text-xs mt-1">{{ addForm.errors.kode }}</p>
+                        <form @submit.prevent="submitAdd">
+                            <div class="px-6 py-5 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
+                                        <input v-model="addForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cth: DIV001" />
+                                        <p v-if="addForm.errors.kode" class="text-red-500 text-xs mt-1">{{ addForm.errors.kode }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
+                                        <input v-model="addForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                                        <p v-if="addForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ addForm.errors.no_urut }}</p>
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
-                                    <input v-model="addForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
-                                    <p v-if="addForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ addForm.errors.no_urut }}</p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
+                                    <input v-model="addForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama divisi" />
+                                    <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
+                                    <input v-model="addForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nomor lantai" />
+                                    <p v-if="addForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ addForm.errors.lantai }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                                    <input v-model="addForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
+                                    <p v-if="addForm.errors.url" class="text-red-500 text-xs mt-1">{{ addForm.errors.url }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                                    <input @change="onLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="addForm.errors.logo" class="text-red-500 text-xs mt-1">{{ addForm.errors.logo }}</p>
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
-                                <input v-model="addForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama divisi" />
-                                <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama }}</p>
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showAddModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
+                                <button type="submit" :disabled="addForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                </button>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
-                                <input v-model="addForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nomor lantai" />
-                                <p v-if="addForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ addForm.errors.lantai }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input v-model="addForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-                                <p v-if="addForm.errors.url" class="text-red-500 text-xs mt-1">{{ addForm.errors.url }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                <input @change="onLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="addForm.errors.logo" class="text-red-500 text-xs mt-1">{{ addForm.errors.logo }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showAddModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                            <button @click="submitAdd" :disabled="addForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>
@@ -365,55 +389,57 @@ const confirmDelete = (id: number) => {
                             </button>
                         </div>
 
-                        <div class="px-6 py-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
+                        <form @submit.prevent="submitEdit">
+                            <div class="px-6 py-5 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
+                                        <input v-model="editForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                        <p v-if="editForm.errors.kode" class="text-red-500 text-xs mt-1">{{ editForm.errors.kode }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
+                                        <input v-model="editForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                        <p v-if="editForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ editForm.errors.no_urut }}</p>
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode <span class="text-red-500">*</span></label>
-                                    <input v-model="editForm.kode" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                    <p v-if="editForm.errors.kode" class="text-red-500 text-xs mt-1">{{ editForm.errors.kode }}</p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
+                                    <input v-model="editForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama }}</p>
                                 </div>
+
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">No Urut</label>
-                                    <input v-model="editForm.no_urut" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                    <p v-if="editForm.errors.no_urut" class="text-red-500 text-xs mt-1">{{ editForm.errors.no_urut }}</p>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
+                                    <input v-model="editForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ editForm.errors.lantai }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                                    <input v-model="editForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.url" class="text-red-500 text-xs mt-1">{{ editForm.errors.url }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                                    <div v-if="editingDivisi?.logo" class="mb-2">
+                                        <img :src="`/storage/${editingDivisi.logo}`" class="h-10 w-auto object-contain" alt="Logo saat ini" />
+                                        <p class="text-xs text-gray-400 mt-1">Upload baru untuk mengganti logo</p>
+                                    </div>
+                                    <input @change="onEditLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.logo" class="text-red-500 text-xs mt-1">{{ editForm.errors.logo }}</p>
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
-                                <input v-model="editForm.nama" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama }}</p>
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showEditModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
+                                <button type="submit" :disabled="editForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
+                                </button>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
-                                <input v-model="editForm.lantai" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.lantai" class="text-red-500 text-xs mt-1">{{ editForm.errors.lantai }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                                <input v-model="editForm.url" type="url" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.url" class="text-red-500 text-xs mt-1">{{ editForm.errors.url }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                <div v-if="editingDivisi?.logo" class="mb-2">
-                                    <img :src="`/storage/${editingDivisi.logo}`" class="h-10 w-auto object-contain" alt="Logo saat ini" />
-                                    <p class="text-xs text-gray-400 mt-1">Upload baru untuk mengganti logo</p>
-                                </div>
-                                <input @change="onEditLogoChange" type="file" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.logo" class="text-red-500 text-xs mt-1">{{ editForm.errors.logo }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showEditModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                            <button @click="submitEdit" :disabled="editForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>

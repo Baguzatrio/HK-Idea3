@@ -2,30 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Divisi;
-use App\Models\Permission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Permission;
+use App\Models\Divisi;
 
 class PermissionController extends Controller
 {
     public function index()
     {
-        $permissions = Permission::with(['divisi', 'roles'])
-            ->get()
-            ->map(function ($permission) {
+        $permissions = Permission::get()
+            ->map(function ($p) {
+                // To avoid relation error if not defined on Spatie model, let's fetch divisi name via Divisi model
+                $divisi = Divisi::find($p->divisi_id);
                 return [
-                    'id'             => $permission->id,
-                    'nama'           => $permission->name,
-                    'nama_divisi'    => $permission->divisi?->nama ?? '-',
-                    'divisi_id'      => $permission->divisi_id,
-                    'judul_report'   => $permission->judul_report ?? '-',
-                    'nama_report'    => $permission->nama_report ?? '-',
-                    'link_dashboard' => $permission->link_dashboard ?? '',
-                    'roles'          => $permission->roles->map(fn($r) => [
-                        'id'   => $r->id,
-                        'nama' => $r->name,
-                    ]),
+                    'id'             => $p->id,
+                    'nama'           => $p->name, // from Spatie column
+                    'divisi_id'      => $p->divisi_id,
+                    'nama_divisi'    => $divisi ? $divisi->nama : '-',
+                    'judul_report'   => $p->judul_report,
+                    'nama_report'    => $p->nama_report,
+                    'link_dashboard' => $p->link_dashboard,
                 ];
             });
 
@@ -44,7 +41,7 @@ class PermissionController extends Controller
             'divisi_id'      => 'nullable|exists:divisi,id',
             'judul_report'   => 'nullable|string|max:255',
             'nama_report'    => 'nullable|string|max:255',
-            'link_dashboard' => 'nullable|string|max:255',
+            'link_dashboard' => 'nullable|url|max:1000',
         ]);
 
         Permission::create([
@@ -66,7 +63,7 @@ class PermissionController extends Controller
             'divisi_id'      => 'nullable|exists:divisi,id',
             'judul_report'   => 'nullable|string|max:255',
             'nama_report'    => 'nullable|string|max:255',
-            'link_dashboard' => 'nullable|string|max:255',
+            'link_dashboard' => 'nullable|url|max:1000',
         ]);
 
         $permission->update([

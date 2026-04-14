@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import AppFooter from '@/Components/AppFooter.vue';
@@ -10,14 +10,22 @@ import { App, Link } from '@inertiajs/vue3';
 import { User } from '@lucide/vue';
 
 const showingNavigationDropdown = ref(false);
+
+const isMasterDataActive = computed(() => {
+    return route().current('users.*') ||
+        route().current('divisis.*') ||
+        route().current('permissions.*') ||
+        route().current('roles.*');
+});
 </script>
 
 <template>
     <div class="min-h-screen flex flex-col">
-    <div class="flex flex-col flex-1 bg-gray-100">
-            <div class="sticky top-0 z-50 shadow-md">
-                <div class="bg-blue-900 text-white text-center py-4"></div>
-                <nav class=" border-b border-gray-100 bg-white">
+        <div class="flex flex-col flex-1 bg-gray-100">
+            <div class="sticky top-0 z-50 shadow-md backdrop-blur-md bg-white/50">
+                <div class="bg-blue-900 backdrop-blur-md py-4"></div>
+                <div class="bg-red-500 h-0.5"></div>
+                <nav class=" border-b border-gray-100 ">
                     <!-- Primary Navigation Menu -->
                     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div class="flex h-16 justify-between">
@@ -34,39 +42,44 @@ const showingNavigationDropdown = ref(false);
                                     <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
                                         Dashboard
                                     </NavLink>
-                                    <div class="relative">
-                                         <Dropdown>
-                                        <template #trigger>
-                                            <span class="inline-flex rounded-md">
-                                                <button type="button"
-                                                    class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none">
-                                                    Master Data
+                                    <div class="relative flex items-center h-full pt-1"
+                                        v-if="$page.props.auth.is_super_admin">
+                                        <Dropdown hoverable>
+                                            <template #trigger>
+                                                <span class="inline-flex rounded-md h-full">
+                                                    <button type="button" :class="[
+                                                        isMasterDataActive
+                                                            ? 'inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out h-full'
+                                                            : 'inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out h-full'
+                                                    ]">
+                                                        Master Data
 
-                                                    <svg class="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                                        viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fill-rule="evenodd"
-                                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
-                                                </button>
-                                            </span>
-                                        </template>
+                                                        <svg class="-me-0.5 ms-2 h-4 w-4"
+                                                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                            fill="currentColor">
+                                                            <path fill-rule="evenodd"
+                                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                    </button>
+                                                </span>
+                                            </template>
 
-                                        <template #content>
-                                            <DropdownLink :href="route('users.index')">
-                                                User
-                                            </DropdownLink>
-                                            <DropdownLink :href="route('divisis.index')">
-                                                Divisi
-                                            </DropdownLink>
-                                            <DropdownLink :href="route('permissions.index')">
-                                                Permission
-                                            </DropdownLink>
-                                            <DropdownLink :href="route('roles.index')">
-                                                Role
-                                            </DropdownLink>
-                                        </template>
-                                    </Dropdown>
+                                            <template #content>
+                                                <DropdownLink :href="route('users.index')">
+                                                    User
+                                                </DropdownLink>
+                                                <DropdownLink :href="route('divisis.index')">
+                                                    Divisi
+                                                </DropdownLink>
+                                                <DropdownLink :href="route('roles.index')">
+                                                    Role
+                                                </DropdownLink>
+                                                <DropdownLink :href="route('permissions.index')">
+                                                    Permission
+                                                </DropdownLink>
+                                            </template>
+                                        </Dropdown>
                                     </div>
                                 </div>
                             </div>
@@ -78,7 +91,7 @@ const showingNavigationDropdown = ref(false);
                                         <template #trigger>
                                             <span class="inline-flex rounded-md">
                                                 <button type="button"
-                                                    class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none">
+                                                    class="inline-flex items-center rounded-md border border-transparent px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none">
                                                     <User class="h-4 w-4 mr-2" />
                                                     {{ $page.props.auth.user.name }}
 
@@ -93,11 +106,10 @@ const showingNavigationDropdown = ref(false);
                                         </template>
 
                                         <template #content>
-                                            <DropdownLink :href="route('profile.edit')">
-                                                Profile
-                                            </DropdownLink>
                                             <DropdownLink :href="route('logout')" method="post" as="button">
-                                                Log Out
+                                                <div class="text-red-500 hover:text-red-700">
+                                                    Log Out
+                                                </div>
                                             </DropdownLink>
                                         </template>
                                     </Dropdown>
@@ -165,19 +177,19 @@ const showingNavigationDropdown = ref(false);
                 </nav>
             </div>
 
-                <!-- Page Heading -->
-                <header class="bg-white shadow" v-if="$slots.header">
-                    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        <slot name="header" />
-                    </div>
-                </header>
+            <!-- Page Heading -->
+            <header class="bg-white shadow" v-if="$slots.header">
+                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                    <slot name="header" />
+                </div>
+            </header>
 
-                <!-- Page Content -->
-                <main class="flex-1">
-                    <slot />
-                </main>
+            <!-- Page Content -->
+            <main class="flex-1">
+                <slot />
+            </main>
             <div>
-                <AppFooter  />
+                <AppFooter />
             </div>
         </div>
     </div>
