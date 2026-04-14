@@ -6,11 +6,13 @@ const props = withDefaults(
         align?: 'left' | 'right';
         width?: '48';
         contentClasses?: string;
+        hoverable?: boolean;
     }>(),
     {
         align: 'right',
         width: '48',
         contentClasses: 'py-1 bg-white',
+        hoverable: false,
     },
 );
 
@@ -40,17 +42,25 @@ const alignmentClasses = computed(() => {
 });
 
 const open = ref(false);
+
+const handleMouseEnter = () => {
+    if (props.hoverable) open.value = true;
+};
+
+const handleMouseLeave = () => {
+    if (props.hoverable) open.value = false;
+};
 </script>
 
 <template>
-    <div class="relative">
-        <div @click="open = !open">
+    <div class="relative" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+        <div @click="!props.hoverable ? open = !open : null">
             <slot name="trigger" />
         </div>
 
         <!-- Full Screen Dropdown Overlay -->
         <div
-            v-show="open"
+            v-show="open && !props.hoverable"
             class="fixed inset-0 z-40"
             @click="open = false"
         ></div>

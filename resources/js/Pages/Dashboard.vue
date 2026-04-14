@@ -38,14 +38,14 @@ const selectDivisi = (divisi: Divisi) => {
     activeDivisi.value = divisi;
     activePermission.value = null;
 
-    // Jika hanya ada 1 permission, langsung tampilkan
-    if (divisi.permissions.length === 1) {
+    // Jika ada permission, langsung tampilkan permission yang paling awal
+    if (divisi.permissions.length > 0) {
         activePermission.value = divisi.permissions[0];
     }
 
     setTimeout(() => {
-         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 350);
+         window.scrollTo({ top: 80, behavior: 'smooth' });
+    }, 500);
 };
 
 const selectPermission = (permission: Permission) => {
@@ -123,7 +123,7 @@ const selectPermission = (permission: Permission) => {
                                     :src="activePermission.link_dashboard"
                                     :title="activePermission.nama_report"
                                     class="w-full"
-                                    style="height: 65vh; border: none;"
+                                    style="height: 80vh; border: none;"
                                     allowfullscreen
                                 />
                             </div>

@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import Swal from 'sweetalert2';
 
 interface Permission {
     id: number;
@@ -51,6 +52,7 @@ const submitAdd = () => {
         onSuccess: () => {
             showAddModal.value = false;
             addForm.reset();
+            Swal.fire('Berhasil!', 'Data role berhasil ditambahkan.', 'success');
             router.reload({ only: ['roles'] });
         },
     });
@@ -90,6 +92,7 @@ const submitEdit = () => {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
+            Swal.fire('Berhasil!', 'Data role berhasil diperbarui.', 'success');
             router.reload({ only: ['roles'] });
         },
     });
@@ -97,9 +100,28 @@ const submitEdit = () => {
 
 // ── Delete ───────────────────────────────────────────────────
 const confirmDelete = (id: number) => {
-    if (confirm('Yakin ingin menghapus role ini?')) {
-        router.delete(route('roles.destroy', id));
-    }
+    Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Data role yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('roles.destroy', id), {
+                onSuccess: () => {
+                    Swal.fire(
+                        'Terhapus!',
+                        'Data role berhasil dihapus.',
+                        'success'
+                    )
+                }
+            });
+        }
+    });
 };
 </script>
 
@@ -290,49 +312,51 @@ const confirmDelete = (id: number) => {
                             </button>
                         </div>
 
-                        <div class="px-6 py-5 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role <span class="text-red-500">*</span></label>
-                                <input
-                                    v-model="addForm.nama"
-                                    type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Cth: Admin Akuntansi"
-                                />
-                                <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama }}</p>
+                        <form @submit.prevent="submitAdd">
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role <span class="text-red-500">*</span></label>
+                                    <input
+                                        v-model="addForm.nama"
+                                        type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Cth: Admin Akuntansi"
+                                    />
+                                    <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Permission</label>
+                                    <div v-if="permissions.length === 0" class="text-sm text-gray-400 italic">
+                                        Belum ada permission tersedia.
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                        <label
+                                            v-for="perm in permissions"
+                                            :key="perm.id"
+                                            class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-blue-900"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                :value="perm.id"
+                                                :checked="addForm.permissions.includes(perm.id)"
+                                                @change="toggleAddPermission(perm.id)"
+                                                class="rounded border-gray-300 text-blue-900 focus:ring-blue-500"
+                                            />
+                                            {{ perm.nama }}
+                                        </label>
+                                    </div>
+                                    <p v-if="addForm.errors.permissions" class="text-red-500 text-xs mt-1">{{ addForm.errors.permissions }}</p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Permission</label>
-                                <div v-if="permissions.length === 0" class="text-sm text-gray-400 italic">
-                                    Belum ada permission tersedia.
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-                                    <label
-                                        v-for="perm in permissions"
-                                        :key="perm.id"
-                                        class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-blue-900"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            :value="perm.id"
-                                            :checked="addForm.permissions.includes(perm.id)"
-                                            @change="toggleAddPermission(perm.id)"
-                                            class="rounded border-gray-300 text-blue-900 focus:ring-blue-500"
-                                        />
-                                        {{ perm.nama }}
-                                    </label>
-                                </div>
-                                <p v-if="addForm.errors.permissions" class="text-red-500 text-xs mt-1">{{ addForm.errors.permissions }}</p>
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showAddModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
+                                <button type="submit" :disabled="addForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                </button>
                             </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showAddModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                            <button @click="submitAdd" :disabled="addForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>
@@ -352,48 +376,50 @@ const confirmDelete = (id: number) => {
                             </button>
                         </div>
 
-                        <div class="px-6 py-5 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role <span class="text-red-500">*</span></label>
-                                <input
-                                    v-model="editForm.nama"
-                                    type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama }}</p>
+                        <form @submit.prevent="submitEdit">
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Role <span class="text-red-500">*</span></label>
+                                    <input
+                                        v-model="editForm.nama"
+                                        type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Permission</label>
+                                    <div v-if="permissions.length === 0" class="text-sm text-gray-400 italic">
+                                        Belum ada permission tersedia.
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                        <label
+                                            v-for="perm in permissions"
+                                            :key="perm.id"
+                                            class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-blue-900"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                :value="perm.id"
+                                                :checked="editForm.permissions.includes(perm.id)"
+                                                @change="toggleEditPermission(perm.id)"
+                                                class="rounded border-gray-300 text-blue-900 focus:ring-blue-500"
+                                            />
+                                            {{ perm.nama }}
+                                        </label>
+                                    </div>
+                                    <p v-if="editForm.errors.permissions" class="text-red-500 text-xs mt-1">{{ editForm.errors.permissions }}</p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Permission</label>
-                                <div v-if="permissions.length === 0" class="text-sm text-gray-400 italic">
-                                    Belum ada permission tersedia.
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-                                    <label
-                                        v-for="perm in permissions"
-                                        :key="perm.id"
-                                        class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-blue-900"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            :value="perm.id"
-                                            :checked="editForm.permissions.includes(perm.id)"
-                                            @change="toggleEditPermission(perm.id)"
-                                            class="rounded border-gray-300 text-blue-900 focus:ring-blue-500"
-                                        />
-                                        {{ perm.nama }}
-                                    </label>
-                                </div>
-                                <p v-if="editForm.errors.permissions" class="text-red-500 text-xs mt-1">{{ editForm.errors.permissions }}</p>
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showEditModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
+                                <button type="submit" :disabled="editForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
+                                </button>
                             </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showEditModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                            <button @click="submitEdit" :disabled="editForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>

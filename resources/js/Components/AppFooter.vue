@@ -177,7 +177,7 @@
 }
 
 .footer-bottom-line {
-  height: 3px;
+  height: 1px;
   background: linear-gradient(to right, #cc0000 30%);
 }
 

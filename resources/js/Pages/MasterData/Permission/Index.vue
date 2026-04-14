@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import Swal from 'sweetalert2';
 
 interface Divisi {
     id: number;
@@ -63,6 +64,7 @@ const submitAdd = () => {
         onSuccess: () => {
             showAddModal.value = false;
             addForm.reset();
+            Swal.fire('Berhasil!', 'Data permission berhasil ditambahkan.', 'success');
             router.reload({ only: ['permissions'] });
         },
     });
@@ -96,6 +98,7 @@ const submitEdit = () => {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
+            Swal.fire('Berhasil!', 'Data permission berhasil diperbarui.', 'success');
             router.reload({ only: ['permissions'] });
         },
     });
@@ -103,9 +106,28 @@ const submitEdit = () => {
 
 // ── Delete ───────────────────────────────────────────────────
 const confirmDelete = (id: number) => {
-    if (confirm('Yakin ingin menghapus permission ini?')) {
-        router.delete(route('permissions.destroy', id));
-    }
+    Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Data permission yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('permissions.destroy', id), {
+                onSuccess: () => {
+                    Swal.fire(
+                        'Terhapus!',
+                        'Data permission berhasil dihapus.',
+                        'success'
+                    )
+                }
+            });
+        }
+    });
 };
 
 // ── Preview iframe ───────────────────────────────────────────
@@ -311,68 +333,70 @@ const openPreview = (url: string) => {
                             </button>
                         </div>
 
-                        <div class="px-6 py-5 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Permission <span
-                                        class="text-red-500">*</span></label>
-                                <input v-model="addForm.nama" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Cth: view-dashboard-akuntansi" />
-                                <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama
-                                    }}</p>
+                        <form @submit.prevent="submitAdd">
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Permission <span
+                                            class="text-red-500">*</span></label>
+                                    <input v-model="addForm.nama" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Cth: view-dashboard-akuntansi" />
+                                    <p v-if="addForm.errors.nama" class="text-red-500 text-xs mt-1">{{ addForm.errors.nama
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                    <select v-model="addForm.divisi_id"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Pilih Divisi --</option>
+                                        <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                            }}
+                                        </option>
+                                    </select>
+                                    <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
+                                        addForm.errors.divisi_id
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Report</label>
+                                    <input v-model="addForm.judul_report" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Judul laporan" />
+                                    <p v-if="addForm.errors.judul_report" class="text-red-500 text-xs mt-1">{{
+                                        addForm.errors.judul_report }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Report</label>
+                                    <input v-model="addForm.nama_report" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Nama laporan" />
+                                    <p v-if="addForm.errors.nama_report" class="text-red-500 text-xs mt-1">{{
+                                        addForm.errors.nama_report }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Link Dashboard
+                                        (iframe)</label>
+                                    <input v-model="addForm.link_dashboard" type="url"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="https://..." />
+                                    <p v-if="addForm.errors.link_dashboard" class="text-red-500 text-xs mt-1">{{
+                                        addForm.errors.link_dashboard }}</p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
-                                <select v-model="addForm.divisi_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">-- Pilih Divisi --</option>
-                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
-                                        }}
-                                    </option>
-                                </select>
-                                <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
-                                    addForm.errors.divisi_id
-                                    }}</p>
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showAddModal = false"
+                                    class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
+                                <button type="submit" :disabled="addForm.processing"
+                                    class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                </button>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Report</label>
-                                <input v-model="addForm.judul_report" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Judul laporan" />
-                                <p v-if="addForm.errors.judul_report" class="text-red-500 text-xs mt-1">{{
-                                    addForm.errors.judul_report }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Report</label>
-                                <input v-model="addForm.nama_report" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nama laporan" />
-                                <p v-if="addForm.errors.nama_report" class="text-red-500 text-xs mt-1">{{
-                                    addForm.errors.nama_report }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Dashboard
-                                    (iframe)</label>
-                                <input v-model="addForm.link_dashboard" type="url"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="https://..." />
-                                <p v-if="addForm.errors.link_dashboard" class="text-red-500 text-xs mt-1">{{
-                                    addForm.errors.link_dashboard }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showAddModal = false"
-                                class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                            <button @click="submitAdd" :disabled="addForm.processing"
-                                class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>
@@ -397,63 +421,65 @@ const openPreview = (url: string) => {
                             </button>
                         </div>
 
-                        <div class="px-6 py-5 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Permission <span
-                                        class="text-red-500">*</span></label>
-                                <input v-model="editForm.nama" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama
-                                    }}</p>
+                        <form @submit.prevent="submitEdit">
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Permission <span
+                                            class="text-red-500">*</span></label>
+                                    <input v-model="editForm.nama" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.nama" class="text-red-500 text-xs mt-1">{{ editForm.errors.nama
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                    <select v-model="editForm.divisi_id"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Pilih Divisi --</option>
+                                        <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                            }}
+                                        </option>
+                                    </select>
+                                    <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.divisi_id }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Report</label>
+                                    <input v-model="editForm.judul_report" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.judul_report" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.judul_report }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Report</label>
+                                    <input v-model="editForm.nama_report" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.nama_report" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.nama_report }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Link Dashboard
+                                        (iframe)</label>
+                                    <input v-model="editForm.link_dashboard" type="url"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <p v-if="editForm.errors.link_dashboard" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.link_dashboard }}</p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
-                                <select v-model="editForm.divisi_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">-- Pilih Divisi --</option>
-                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
-                                        }}
-                                    </option>
-                                </select>
-                                <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.divisi_id }}</p>
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showEditModal = false"
+                                    class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
+                                <button type="submit" :disabled="editForm.processing"
+                                    class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
+                                </button>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Report</label>
-                                <input v-model="editForm.judul_report" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.judul_report" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.judul_report }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Report</label>
-                                <input v-model="editForm.nama_report" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.nama_report" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.nama_report }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Link Dashboard
-                                    (iframe)</label>
-                                <input v-model="editForm.link_dashboard" type="url"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                <p v-if="editForm.errors.link_dashboard" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.link_dashboard }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showEditModal = false"
-                                class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                            <button @click="submitEdit" :disabled="editForm.processing"
-                                class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>

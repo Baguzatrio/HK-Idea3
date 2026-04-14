@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import Swal from 'sweetalert2';
 
 interface Divisi {
     id: number;
@@ -68,6 +69,7 @@ const submitAdd = () => {
         onSuccess: () => {
             showAddModal.value = false;
             addForm.reset();
+            Swal.fire('Berhasil!', 'Data user berhasil ditambahkan.', 'success');
             router.reload({ only: ['users'] });
         },
     });
@@ -102,6 +104,7 @@ const submitEdit = () => {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
+            Swal.fire('Berhasil!', 'Data user berhasil diperbarui.', 'success');
             router.reload({ only: ['users'] });
         },
     });
@@ -109,9 +112,28 @@ const submitEdit = () => {
 
 // ── Delete ───────────────────────────────────────────────────
 const confirmDelete = (id: number) => {
-    if (confirm('Yakin ingin menghapus user ini?')) {
-        router.delete(route('users.destroy', id));
-    }
+    Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: "Data user yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('users.destroy', id), {
+                onSuccess: () => {
+                    Swal.fire(
+                        'Terhapus!',
+                        'Data user berhasil dihapus.',
+                        'success'
+                    )
+                }
+            });
+        }
+    });
 };
 </script>
 
@@ -296,75 +318,77 @@ const confirmDelete = (id: number) => {
                             </button>
                         </div>
 
-                        <!-- Body -->
-                        <div class="px-6 py-5 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                                <input v-model="addForm.name" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nama lengkap" />
-                                <p v-if="addForm.errors.name" class="text-red-500 text-xs mt-1">{{ addForm.errors.name
-                                    }}</p>
-                            </div>
+                        <!-- Form -->
+                        <form @submit.prevent="submitAdd">
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
+                                    <input v-model="addForm.name" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Nama lengkap" />
+                                    <p v-if="addForm.errors.name" class="text-red-500 text-xs mt-1">{{ addForm.errors.name
+                                        }}</p>
+                                </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input v-model="addForm.email" type="email"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="email@example.com" />
-                                <p v-if="addForm.errors.email" class="text-red-500 text-xs mt-1">{{ addForm.errors.email
-                                    }}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                <input v-model="addForm.password" type="password"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Password" />
-                                <p v-if="addForm.errors.password" class="text-red-500 text-xs mt-1">{{
-                                    addForm.errors.password
-                                    }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
-                                <select v-model="addForm.divisi_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">-- Tidak ada divisi --</option>
-                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                                    <input v-model="addForm.email" type="email"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="email@example.com" />
+                                    <p v-if="addForm.errors.email" class="text-red-500 text-xs mt-1">{{ addForm.errors.email
                                         }}
-                                    </option>
-                                </select>
-                                <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
-                                    addForm.errors.divisi_id
-                                    }}</p>
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
+                                    <input v-model="addForm.password" type="password"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Password" />
+                                    <p v-if="addForm.errors.password" class="text-red-500 text-xs mt-1">{{
+                                        addForm.errors.password
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                    <select v-model="addForm.divisi_id"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Tidak ada divisi --</option>
+                                        <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                            }}
+                                        </option>
+                                    </select>
+                                    <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
+                                        addForm.errors.divisi_id
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                    <select v-model="addForm.role"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Tidak ada role --</option>
+                                        <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
+                                        </option>
+                                    </select>
+                                    <p v-if="addForm.errors.role" class="text-red-500 text-xs mt-1">{{ addForm.errors.role
+                                        }}</p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                <select v-model="addForm.role"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">-- Tidak ada role --</option>
-                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
-                                    </option>
-                                </select>
-                                <p v-if="addForm.errors.role" class="text-red-500 text-xs mt-1">{{ addForm.errors.role
-                                    }}</p>
+                            <!-- Footer -->
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showAddModal = false"
+                                    class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
+                                    Batal
+                                </button>
+                                <button type="submit" :disabled="addForm.processing"
+                                    class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                </button>
                             </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showAddModal = false"
-                                class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
-                                Batal
-                            </button>
-                            <button @click="submitAdd" :disabled="addForm.processing"
-                                class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>
@@ -390,74 +414,76 @@ const confirmDelete = (id: number) => {
                             </button>
                         </div>
 
-                        <!-- Body -->
-                        <div class="px-6 py-5 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                                <input v-model="editForm.name" type="text"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nama lengkap" />
-                                <p v-if="editForm.errors.name" class="text-red-500 text-xs mt-1">{{ editForm.errors.name
-                                    }}</p>
+                        <!-- Form -->
+                        <form @submit.prevent="submitEdit">
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
+                                    <input v-model="editForm.name" type="text"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Nama lengkap" />
+                                    <p v-if="editForm.errors.name" class="text-red-500 text-xs mt-1">{{ editForm.errors.name
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                                    <input v-model="editForm.email" type="email"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="email@example.com" />
+                                    <p v-if="editForm.errors.email" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.email }}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <input v-model="editForm.password" type="password"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Kosongkan jika tidak ingin mengubah password" />
+                                    <p v-if="editForm.errors.password" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.password
+                                        }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
+                                    <select v-model="editForm.divisi_id"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Tidak ada divisi --</option>
+                                        <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
+                                            }}
+                                        </option>
+                                    </select>
+                                    <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
+                                        editForm.errors.divisi_id }}</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                    <select v-model="editForm.role"
+                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Tidak ada role --</option>
+                                        <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
+                                        </option>
+                                    </select>
+                                    <p v-if="editForm.errors.role" class="text-red-500 text-xs mt-1">{{ editForm.errors.role
+                                        }}</p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input v-model="editForm.email" type="email"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="email@example.com" />
-                                <p v-if="editForm.errors.email" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.email }}
-                                </p>
+                            <!-- Footer -->
+                            <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+                                <button type="button" @click="showEditModal = false"
+                                    class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
+                                    Batal
+                                </button>
+                                <button type="submit" :disabled="editForm.processing"
+                                    class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ editForm.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
+                                </button>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                <input v-model="editForm.password" type="password"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Kosongkan jika tidak ingin mengubah password" />
-                                <p v-if="editForm.errors.password" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.password
-                                    }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
-                                <select v-model="editForm.divisi_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">-- Tidak ada divisi --</option>
-                                    <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
-                                        }}
-                                    </option>
-                                </select>
-                                <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
-                                    editForm.errors.divisi_id }}</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                <select v-model="editForm.role"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">-- Tidak ada role --</option>
-                                    <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
-                                    </option>
-                                </select>
-                                <p v-if="editForm.errors.role" class="text-red-500 text-xs mt-1">{{ editForm.errors.role
-                                    }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                            <button @click="showEditModal = false"
-                                class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
-                                Batal
-                            </button>
-                            <button @click="submitEdit" :disabled="editForm.processing"
-                                class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                {{ editForm.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
-                            </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </Transition>
