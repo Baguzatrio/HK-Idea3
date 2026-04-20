@@ -153,6 +153,23 @@ const isMasterDataActive = computed(() => {
                             </ResponsiveNavLink>
                         </div>
 
+                        <!-- Responsive Master Data (only for super admin) -->
+                        <div class="space-y-1 pb-3 pt-2 border-t border-gray-200" v-if="$page.props.auth.is_super_admin">
+                            <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-2">Master Data</div>
+                            <ResponsiveNavLink :href="route('users.index')" :active="route().current('users.*')">
+                                User
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('divisis.index')" :active="route().current('divisis.*')">
+                                Divisi
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('roles.index')" :active="route().current('roles.*')">
+                                Role
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('permissions.index')" :active="route().current('permissions.*')">
+                                Permission
+                            </ResponsiveNavLink>
+                        </div>
+
                         <!-- Responsive Settings Options -->
                         <div class="border-t border-gray-200 pb-1 pt-4">
                             <div class="px-4">
@@ -165,11 +182,10 @@ const isMasterDataActive = computed(() => {
                             </div>
 
                             <div class="mt-3 space-y-1">
-                                <ResponsiveNavLink :href="route('profile.edit')">
-                                    Profile
-                                </ResponsiveNavLink>
                                 <ResponsiveNavLink :href="route('logout')" method="post" as="button">
-                                    Log Out
+                                    <div class="text-red-500 hover:text-red-700 w-full text-start">
+                                        Log Out
+                                    </div>
                                 </ResponsiveNavLink>
                             </div>
                         </div>
