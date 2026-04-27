@@ -1,26 +1,40 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
+import { authState, fetchAuthUser } from '@/store/auth';
 import Dropdown from '@/Components/Dropdown.vue';
 import AppFooter from '@/Components/AppFooter.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { App, Link } from '@inertiajs/vue3';
 import { User } from '@lucide/vue';
+
+const route = useRoute();
+const router = useRouter();
 
 const showingNavigationDropdown = ref(false);
 
 const isMasterDataActive = computed(() => {
-    return route().current('users.*') ||
-        route().current('divisis.*') ||
-        route().current('permissions.*') ||
-        route().current('roles.*');
+    return route.path.startsWith('/users') ||
+        route.path.startsWith('/divisi') ||
+        route.path.startsWith('/roles') ||
+        route.path.startsWith('/permissions');
+});
+
+const handleLogout = async () => {
+    await axios.post('/logout');
+    authState.user = null;
+    router.push('/login');
+};
+
+onMounted(() => {
+    fetchAuthUser();
 });
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col" v-if="authState.user">
         <div class="flex flex-col flex-1 bg-gray-100">
             <div class="sticky top-0 z-50 shadow-md backdrop-blur-md bg-white/50">
                 <div class="bg-blue-900 backdrop-blur-md py-4"></div>
@@ -32,18 +46,17 @@ const isMasterDataActive = computed(() => {
                             <div class="flex">
                                 <!-- Logo -->
                                 <div class="flex shrink-0 items-center">
-                                    <Link :href="route('dashboard')">
+                                    <router-link to="/dashboard">
                                         <img src="\images\logo\logoHK.png" alt="" class="block h-9 w-auto fill-current">
-                                    </Link>
+                                    </router-link>
                                 </div>
 
                                 <!-- Navigation Links -->
                                 <div class="items-center hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                    <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
+                                    <NavLink to="/dashboard" :active="route.path === '/dashboard'">
                                         Dashboard
                                     </NavLink>
-                                    <div class="relative flex items-center h-full pt-1"
-                                        v-if="$page.props.auth.is_super_admin">
+                                    <div class="relative flex items-center h-full pt-1" v-if="authState.is_super_admin">
                                         <Dropdown hoverable>
                                             <template #trigger>
                                                 <span class="inline-flex rounded-md h-full">
@@ -66,18 +79,10 @@ const isMasterDataActive = computed(() => {
                                             </template>
 
                                             <template #content>
-                                                <DropdownLink :href="route('users.index')">
-                                                    User
-                                                </DropdownLink>
-                                                <DropdownLink :href="route('divisis.index')">
-                                                    Divisi
-                                                </DropdownLink>
-                                                <DropdownLink :href="route('roles.index')">
-                                                    Role
-                                                </DropdownLink>
-                                                <DropdownLink :href="route('permissions.index')">
-                                                    Permission
-                                                </DropdownLink>
+                                                <DropdownLink to="/users">User</DropdownLink>
+                                                <DropdownLink to="/divisis">Divisi</DropdownLink>
+                                                <DropdownLink to="/roles">Role</DropdownLink>
+                                                <DropdownLink to="/permissions">Permission</DropdownLink>
                                             </template>
                                         </Dropdown>
                                     </div>
@@ -93,7 +98,7 @@ const isMasterDataActive = computed(() => {
                                                 <button type="button"
                                                     class="inline-flex items-center rounded-md border border-transparent px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none">
                                                     <User class="h-4 w-4 mr-2" />
-                                                    {{ $page.props.auth.user.name }}
+                                                    {{ authState.user?.name }}
 
                                                     <svg class="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
                                                         viewBox="0 0 20 20" fill="currentColor">
@@ -106,10 +111,8 @@ const isMasterDataActive = computed(() => {
                                         </template>
 
                                         <template #content>
-                                            <DropdownLink :href="route('logout')" method="post" as="button">
-                                                <div class="text-red-500 hover:text-red-700">
-                                                    Log Out
-                                                </div>
+                                            <DropdownLink as="button" @click="handleLogout">
+                                                <div class="text-red-500 hover:text-red-700">Log Out</div>
                                             </DropdownLink>
                                         </template>
                                     </Dropdown>
@@ -118,23 +121,16 @@ const isMasterDataActive = computed(() => {
 
                             <!-- Hamburger -->
                             <div class="-me-2 flex items-center sm:hidden">
-                                <button @click="
-                                    showingNavigationDropdown =
-                                    !showingNavigationDropdown
-                                    "
+                                <button @click="showingNavigationDropdown = !showingNavigationDropdown"
                                     class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none">
                                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                        <path :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        <path
+                                            :class="{ hidden: showingNavigationDropdown, 'inline-flex': !showingNavigationDropdown }"
+                                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M4 6h16M4 12h16M4 18h16" />
-                                        <path :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        <path
+                                            :class="{ hidden: !showingNavigationDropdown, 'inline-flex': showingNavigationDropdown }"
+                                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
@@ -143,29 +139,24 @@ const isMasterDataActive = computed(() => {
                     </div>
 
                     <!-- Responsive Navigation Menu -->
-                    <div :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }" class="sm:hidden">
+                    <div :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }"
+                        class="sm:hidden">
                         <div class="space-y-1 pb-3 pt-2">
-                            <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                Dashboard
+                            <ResponsiveNavLink to="/dashboard" :active="route.path === '/dashboard'">Dashboard
                             </ResponsiveNavLink>
                         </div>
 
-                        <!-- Responsive Master Data (only for super admin) -->
-                        <div class="space-y-1 pb-3 pt-2 border-t border-gray-200" v-if="$page.props.auth.is_super_admin">
-                            <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-2">Master Data</div>
-                            <ResponsiveNavLink :href="route('users.index')" :active="route().current('users.*')">
-                                User
+                        <!-- Responsive Master Data -->
+                        <div class="space-y-1 pb-3 pt-2 border-t border-gray-200" v-if="authState.is_super_admin">
+                            <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-2">
+                                Master Data</div>
+                            <ResponsiveNavLink to="/users" :active="route.path.startsWith('/users')">User
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink :href="route('divisis.index')" :active="route().current('divisis.*')">
-                                Divisi
+                            <ResponsiveNavLink to="/divisis" :active="route.path.startsWith('/divisis')">Divisi
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink :href="route('roles.index')" :active="route().current('roles.*')">
-                                Role
+                            <ResponsiveNavLink to="/roles" :active="route.path.startsWith('/roles')">Role
                             </ResponsiveNavLink>
-                            <ResponsiveNavLink :href="route('permissions.index')" :active="route().current('permissions.*')">
+                            <ResponsiveNavLink to="/permissions" :active="route.path.startsWith('/permissions')">
                                 Permission
                             </ResponsiveNavLink>
                         </div>
@@ -173,19 +164,13 @@ const isMasterDataActive = computed(() => {
                         <!-- Responsive Settings Options -->
                         <div class="border-t border-gray-200 pb-1 pt-4">
                             <div class="px-4">
-                                <div class="text-base font-medium text-gray-800">
-                                    {{ $page.props.auth.user.name }}
-                                </div>
-                                <div class="text-sm font-medium text-gray-500">
-                                    {{ $page.props.auth.user.email }}
-                                </div>
+                                <div class="text-base font-medium text-gray-800">{{ authState.user?.name }}</div>
+                                <div class="text-sm font-medium text-gray-500">{{ authState.user?.email }}</div>
                             </div>
 
                             <div class="mt-3 space-y-1">
-                                <ResponsiveNavLink :href="route('logout')" method="post" as="button">
-                                    <div class="text-red-500 hover:text-red-700 w-full text-start">
-                                        Log Out
-                                    </div>
+                                <ResponsiveNavLink as="button" @click="handleLogout">
+                                    <div class="text-red-500 hover:text-red-700 w-full text-start">Log Out</div>
                                 </ResponsiveNavLink>
                             </div>
                         </div>
@@ -201,12 +186,16 @@ const isMasterDataActive = computed(() => {
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1">
+            <main class="flex-grow min-h-screen">
                 <slot />
             </main>
             <div>
                 <AppFooter />
             </div>
         </div>
+    </div>
+    <div v-else class="min-h-screen flex items-center justify-center bg-gray-100">
+        <!-- Optional Loading indicator wait state before user info is fetched -->
+        <span class="text-gray-500">Memuat data pengguna...</span>
     </div>
 </template>

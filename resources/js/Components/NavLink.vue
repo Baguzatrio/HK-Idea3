@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
 
 const props = defineProps<{
-    href: string;
+    to?: string;
     active?: boolean;
+    as?: string;
+    method?: string;
 }>();
 
 const classes = computed(() =>
@@ -15,7 +16,10 @@ const classes = computed(() =>
 </script>
 
 <template>
-    <Link :href="href" :class="classes">
+    <button v-if="as === 'button'" :class="classes">
         <slot />
-    </Link>
+    </button>
+    <router-link v-else :to="to || ''" :class="classes">
+        <slot />
+    </router-link>
 </template>

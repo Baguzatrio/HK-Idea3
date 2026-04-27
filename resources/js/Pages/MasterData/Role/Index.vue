@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
 import Swal from 'sweetalert2';
 
 interface Permission {
@@ -15,10 +15,27 @@ interface Role {
     permissions: Permission[];
 }
 
-const props = defineProps<{
-    roles: Role[];
-    permissions: Permission[];
-}>();
+const roles = ref<Role[]>([]);
+const permissions = ref<Permission[]>([]);
+const isLoading = ref(true);
+
+const fetchRoles = async () => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get('/api/roles');
+        roles.value = response.data.roles;
+        permissions.value = response.data.permissions;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        Swal.fire('Error', 'Gagal mengambil data role', 'error');
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchRoles();
+});
 
 // ── Search & Pagination ──────────────────────────────────────
 const search = ref('');
@@ -27,7 +44,7 @@ const currentPage = ref(1);
 
 const filtered = computed(() => {
     const q = search.value.toLowerCase();
-    return props.roles.filter(r => r.nama.toLowerCase().includes(q));
+    return roles.value.filter(r => r.nama.toLowerCase().includes(q));
 });
 
 const totalPages = computed(() => Math.ceil(filtered.value.length / perPage.value));
@@ -41,61 +58,93 @@ const resetPage = () => { currentPage.value = 1; };
 
 // ── Modal Tambah ─────────────────────────────────────────────
 const showAddModal = ref(false);
+const processingAdd = ref(false);
 
-const addForm = useForm({
+const addForm = ref({
     nama: '',
     permissions: [] as number[],
+    errors: {} as Record<string, string>,
 });
 
-const submitAdd = () => {
-    addForm.post(route('roles.store'), {
-        onSuccess: () => {
-            showAddModal.value = false;
-            addForm.reset();
-            Swal.fire('Berhasil!', 'Data role berhasil ditambahkan.', 'success');
-            router.reload({ only: ['roles'] });
-        },
-    });
+const submitAdd = async () => {
+    processingAdd.value = true;
+    addForm.value.errors = {};
+    try {
+        const payload = { ...addForm.value };
+        delete (payload as any).errors;
+
+        await axios.post('/api/roles', payload);
+        
+        showAddModal.value = false;
+        addForm.value.nama = '';
+        addForm.value.permissions = [];
+        
+        Swal.fire('Berhasil!', 'Data role berhasil ditambahkan.', 'success');
+        fetchRoles();
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            for (const key in error.response.data.errors) {
+                addForm.value.errors[key] = error.response.data.errors[key][0];
+            }
+        }
+    } finally {
+        processingAdd.value = false;
+    }
 };
 
 const toggleAddPermission = (id: number) => {
-    const idx = addForm.permissions.indexOf(id);
-    if (idx === -1) addForm.permissions.push(id);
-    else addForm.permissions.splice(idx, 1);
+    const idx = addForm.value.permissions.indexOf(id);
+    if (idx === -1) addForm.value.permissions.push(id);
+    else addForm.value.permissions.splice(idx, 1);
 };
 
 // ── Modal Edit ───────────────────────────────────────────────
 const showEditModal = ref(false);
+const processingEdit = ref(false);
 const editingRole = ref<Role | null>(null);
 
-const editForm = useForm({
+const editForm = ref({
     nama: '',
     permissions: [] as number[],
+    errors: {} as Record<string, string>,
 });
 
 const openEdit = (role: Role) => {
     editingRole.value = role;
-    editForm.nama = role.nama;
-    editForm.permissions = role.permissions.map(p => p.id);
+    editForm.value.nama = role.nama;
+    editForm.value.permissions = role.permissions.map(p => p.id);
+    editForm.value.errors = {};
     showEditModal.value = true;
 };
 
 const toggleEditPermission = (id: number) => {
-    const idx = editForm.permissions.indexOf(id);
-    if (idx === -1) editForm.permissions.push(id);
-    else editForm.permissions.splice(idx, 1);
+    const idx = editForm.value.permissions.indexOf(id);
+    if (idx === -1) editForm.value.permissions.push(id);
+    else editForm.value.permissions.splice(idx, 1);
 };
 
-const submitEdit = () => {
+const submitEdit = async () => {
     if (!editingRole.value) return;
-    editForm.put(route('roles.update', editingRole.value.id), {
-        onSuccess: () => {
-            showEditModal.value = false;
-            editForm.reset();
-            Swal.fire('Berhasil!', 'Data role berhasil diperbarui.', 'success');
-            router.reload({ only: ['roles'] });
-        },
-    });
+    processingEdit.value = true;
+    editForm.value.errors = {};
+    
+    try {
+        const payload = { ...editForm.value };
+        delete (payload as any).errors;
+
+        await axios.put(`/api/roles/${editingRole.value.id}`, payload);
+        showEditModal.value = false;
+        Swal.fire('Berhasil!', 'Data role berhasil diperbarui.', 'success');
+        fetchRoles();
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            for (const key in error.response.data.errors) {
+                editForm.value.errors[key] = error.response.data.errors[key][0];
+            }
+        }
+    } finally {
+        processingEdit.value = false;
+    }
 };
 
 // ── Delete ───────────────────────────────────────────────────
@@ -109,24 +158,21 @@ const confirmDelete = (id: number) => {
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            router.delete(route('roles.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Terhapus!',
-                        'Data role berhasil dihapus.',
-                        'success'
-                    )
-                }
-            });
+            try {
+                await axios.delete(`/api/roles/${id}`);
+                Swal.fire('Terhapus!', 'Data role berhasil dihapus.', 'success');
+                fetchRoles();
+            } catch (error) {
+                Swal.fire('Error', 'Gagal menghapus data', 'error');
+            }
         }
     });
 };
 </script>
 
 <template>
-    <Head title="Master Data - Role" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -352,8 +398,8 @@ const confirmDelete = (id: number) => {
 
                             <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
                                 <button type="button" @click="showAddModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                                <button type="submit" :disabled="addForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                <button type="submit" :disabled="processingAdd" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ processingAdd ? 'Menyimpan...' : 'Simpan' }}
                                 </button>
                             </div>
                         </form>
@@ -415,8 +461,8 @@ const confirmDelete = (id: number) => {
 
                             <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
                                 <button type="button" @click="showEditModal = false" class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                                <button type="submit" :disabled="editForm.processing" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                    {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
+                                <button type="submit" :disabled="processingEdit" class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
+                                    {{ processingEdit ? 'Menyimpan...' : 'Update' }}
                                 </button>
                             </div>
                         </form>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 interface Permission {
     id: number;
@@ -20,13 +20,27 @@ interface Divisi {
     permissions: Permission[];
 }
 
-defineProps<{
-    divisis: Divisi[];
-}>();
-
 // ── State ────────────────────────────────────────────────────
+const divisis = ref<Divisi[]>([]);
 const activeDivisi = ref<Divisi | null>(null);
 const activePermission = ref<Permission | null>(null);
+const isLoading = ref(true);
+
+const fetchDashboardData = async () => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get('/api/dashboard');
+        divisis.value = response.data.divisis;
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchDashboardData();
+});
 
 const selectDivisi = (divisi: Divisi) => {
     if (activeDivisi.value?.id === divisi.id) {
@@ -44,8 +58,8 @@ const selectDivisi = (divisi: Divisi) => {
     }
 
     setTimeout(() => {
-         window.scrollTo({ top: 80, behavior: 'smooth' });
-    }, 500);
+        window.scrollTo({ top: 80, behavior: 'smooth' });
+    },);
 };
 
 const selectPermission = (permission: Permission) => {
@@ -58,8 +72,6 @@ const selectPermission = (permission: Permission) => {
 </script>
 
 <template>
-    <Head title="Dashboard" />
-
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">Dashboard</h2>
@@ -68,14 +80,10 @@ const selectPermission = (permission: Permission) => {
         <div class="py-8 space-y-6">
 
             <!-- ── Section Dashboard (muncul setelah pilih divisi) ── -->
-            <Transition
-                enter-active-class="transition ease-out duration-300"
-                enter-from-class="opacity-0 -translate-y-3"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-200"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 -translate-y-3"
-            >
+            <Transition enter-active-class="transition ease-out duration-300"
+                enter-from-class="opacity-0 -translate-y-3" enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 -translate-y-3">
                 <div v-if="activeDivisi" id="dashboard-section" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="bg-white rounded-xl shadow-md overflow-hidden">
 
@@ -91,18 +99,15 @@ const selectPermission = (permission: Permission) => {
                         </div>
 
                         <!-- Tombol-tombol Permission/Report -->
-                        <div v-if="activeDivisi.permissions.length > 0" class="px-6 py-4 flex flex-wrap justify-center gap-2">
-                            <button
-                                v-for="perm in activeDivisi.permissions"
-                                :key="perm.id"
-                                @click="selectPermission(perm)"
-                                :class="[
+                        <div v-if="activeDivisi.permissions.length > 0"
+                            class="px-6 py-4 flex flex-wrap justify-center gap-2">
+                            <button v-for="perm in activeDivisi.permissions" :key="perm.id"
+                                @click="selectPermission(perm)" :class="[
                                     'px-4 py-1.5 text-sm rounded border transition',
                                     activePermission?.id === perm.id
                                         ? 'bg-blue-900 text-white border-blue-900'
                                         : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:text-blue-900'
-                                ]"
-                            >
+                                ]">
                                 {{ perm.nama_report }}
                             </button>
                         </div>
@@ -112,20 +117,13 @@ const selectPermission = (permission: Permission) => {
                         </div>
 
                         <!-- iframe -->
-                        <Transition
-                            enter-active-class="transition ease-out duration-200"
-                            enter-from-class="opacity-0"
-                            enter-to-class="opacity-100"
-                        >
-                            <div v-if="activePermission && activePermission.link_dashboard" class="border-t border-gray-100 mt-2">
-                                <iframe
-                                    :key="activePermission.id"
-                                    :src="activePermission.link_dashboard"
-                                    :title="activePermission.nama_report"
-                                    class="w-full"
-                                    style="height: 80vh; border: none;"
-                                    allowfullscreen
-                                />
+                        <Transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0"
+                            enter-to-class="opacity-100">
+                            <div v-if="activePermission && activePermission.link_dashboard"
+                                class="border-t border-gray-100 mt-2">
+                                <iframe :key="activePermission.id" :src="activePermission.link_dashboard"
+                                    :title="activePermission.nama_report" class="w-full"
+                                    style="height: 80vh; border: none;" allowfullscreen />
                             </div>
                         </Transition>
 
@@ -150,34 +148,21 @@ const selectPermission = (permission: Permission) => {
                         Belum ada divisi yang terdaftar.
                     </div>
 
-                    <div
-                        v-else
-                        class="flex flex-wrap justify-center gap-4"
-                    >
-                        <button
-                            v-for="divisi in divisis"
-                            :key="divisi.id"
-                            @click="selectDivisi(divisi)"
-                            :class="[
-                                'flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
-                                'w-[calc(100%/6-1rem)] min-w-[100px] max-w-[140px]',
-                                activeDivisi?.id === divisi.id
-                                    ? 'border-blue-900 bg-blue-50 shadow-md scale-105'
-                                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:scale-105'
-                            ]"
-                        >
+                    <div v-else class="flex flex-wrap justify-center gap-4">
+                        <button v-for="divisi in divisis" :key="divisi.id" @click="selectDivisi(divisi)" :class="[
+                            'flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
+                            'w-[calc(100%/6-1rem)] min-w-[100px] max-w-[140px]',
+                            activeDivisi?.id === divisi.id
+                                ? 'border-blue-900 bg-blue-50 shadow-md scale-105'
+                                : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:scale-105'
+                        ]">
                             <!-- Logo -->
-                            <div class="w-16 h-16 flex items-center justify-center rounded-lg overflow-hidden bg-white ">
-                                <img
-                                    v-if="divisi.logo"
-                                    :src="`/storage/${divisi.logo}`"
-                                    :alt="divisi.nama"
-                                    class="max-w-full max-h-full object-contain p-1"
-                                />
-                                <div
-                                    v-else
-                                    class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-800 font-bold text-2xl"
-                                >
+                            <div
+                                class="w-16 h-16 flex items-center justify-center rounded-lg overflow-hidden bg-white ">
+                                <img v-if="divisi.logo" :src="`/storage/${divisi.logo}`" :alt="divisi.nama"
+                                    class="max-w-full max-h-full object-contain p-1" />
+                                <div v-else
+                                    class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-800 font-bold text-2xl">
                                     {{ divisi.nama.charAt(0).toUpperCase() }}
                                 </div>
                             </div>
@@ -188,10 +173,7 @@ const selectPermission = (permission: Permission) => {
                             </span>
 
                             <!-- Indikator aktif -->
-                            <span
-                                v-if="activeDivisi?.id === divisi.id"
-                                class=""
-                            />
+                            <span v-if="activeDivisi?.id === divisi.id" class="" />
                         </button>
                     </div>
 

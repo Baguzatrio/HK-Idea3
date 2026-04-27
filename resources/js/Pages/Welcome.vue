@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
-defineProps<{
-    canLogin?: boolean;
-    canRegister?: boolean;
-    laravelVersion: string;
-    phpVersion: string;
-}>();
+const canLogin = ref(true);
+const canRegister = ref(true);
+const laravelVersion = ref('11.x');
+const phpVersion = ref('8.x');
 
 function handleImageError() {
     document.getElementById('screenshot-container')?.classList.add('!hidden');
@@ -17,7 +15,6 @@ function handleImageError() {
 </script>
 
 <template>
-    <Head title="Welcome" />
     <div class="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
         <img
             id="background"
@@ -45,29 +42,31 @@ function handleImageError() {
                         </svg>
                     </div>
                     <nav v-if="canLogin" class="-mx-3 flex flex-1 justify-end">
-                        <Link
-                            v-if="$page.props.auth.user"
-                            :href="route('dashboard')"
-                            class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                        >
-                            Dashboard
-                        </Link>
+                        <!-- temporary fix: ignoring auth check to prevent crash -->
+                        <template v-if="false">
+                            <router-link
+                                to="/dashboard"
+                                class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                            >
+                                Dashboard
+                            </router-link>
+                        </template>
 
                         <template v-else>
-                            <Link
-                                :href="route('login')"
+                            <router-link
+                                to="/login"
                                 class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                             >
                                 Log in
-                            </Link>
+                            </router-link>
 
-                            <Link
+                            <router-link
                                 v-if="canRegister"
-                                :href="route('register')"
+                                to="/register"
                                 class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                             >
                                 Register
-                            </Link>
+                            </router-link>
                         </template>
                     </nav>
                 </header>

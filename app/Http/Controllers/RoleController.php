@@ -32,7 +32,7 @@ class RoleController extends Controller
             ];
         });
 
-        return Inertia::render('MasterData/Role/Index', [
+        return response()->json([
             'roles'       => $roles,
             'permissions' => $permissions,
         ]);
@@ -55,7 +55,7 @@ class RoleController extends Controller
             $role->syncPermissions($request->permissions);
         }
 
-        return redirect()->route('roles.index')->with('success', 'Role berhasil ditambahkan.');
+        return response()->json(['message' => 'Role berhasil ditambahkan.']);
     }
 
     public function update(Request $request, Role $role)
@@ -76,13 +76,13 @@ class RoleController extends Controller
             $role->syncPermissions([]);
         }
 
-        return redirect()->route('roles.index')->with('success', 'Role berhasil diupdate.');
+        return response()->json(['message' => 'Role berhasil diupdate.']);
     }
 
     public function destroy(Role $role)
     {
         $role->delete();
 
-        return redirect()->route('roles.index')->with('success', 'Role berhasil dihapus.');
+        return response()->json(['message' => 'Role berhasil dihapus.']);
     }
 }

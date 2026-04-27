@@ -180,6 +180,15 @@
   height: 1px;
   background: linear-gradient(to right, #cc0000 30%);
 }
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+}
 
 /* Responsive */
 @media (max-width: 1024px) {

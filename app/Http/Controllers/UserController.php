@@ -30,7 +30,7 @@ class UserController extends Controller
         $divisis = Divisi::orderBy('nama')->get(['id', 'nama']);
         $roles = Role::orderBy('name')->get(['id', 'name as nama']); // For frontend consistency
 
-        return Inertia::render('MasterData/User/Index', [
+        return response()->json([
             'users'   => $users,
             'divisis' => $divisis,
             'roles'   => $roles,
@@ -58,7 +58,7 @@ class UserController extends Controller
             $user->assignRole($request->role);
         }
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
+        return response()->json(['message' => 'User berhasil ditambahkan.']);
     }
 
     public function update(Request $request, User $user)
@@ -89,13 +89,13 @@ class UserController extends Controller
             $user->syncRoles([]);
         }
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate.');
+        return response()->json(['message' => 'User berhasil diupdate.']);
     }
 
     public function destroy(User $user)
     {
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return response()->json(['message' => 'User berhasil dihapus.']);
     }
 }

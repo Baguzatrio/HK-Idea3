@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
 import Swal from 'sweetalert2';
 
 interface Divisi {
@@ -23,11 +23,29 @@ interface User {
     role: string;
 }
 
-const props = defineProps<{
-    users: User[];
-    divisis: Divisi[];
-    roles: Role[];
-}>();
+const users = ref<User[]>([]);
+const divisis = ref<Divisi[]>([]);
+const roles = ref<Role[]>([]);
+const isLoading = ref(true);
+
+const fetchUsers = async () => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get('/api/users');
+        users.value = response.data.users;
+        divisis.value = response.data.divisis;
+        roles.value = response.data.roles;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        Swal.fire('Error', 'Gagal mengambil data user', 'error');
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchUsers();
+});
 
 // ── Search & Pagination ──────────────────────────────────────
 const search = ref('');
@@ -36,7 +54,7 @@ const currentPage = ref(1);
 
 const filtered = computed(() => {
     const q = search.value.toLowerCase();
-    return props.users.filter(u =>
+    return users.value.filter(u =>
         u.name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
         u.divisi.toLowerCase().includes(q) ||
@@ -55,59 +73,93 @@ const resetPage = () => { currentPage.value = 1; };
 
 // ── Modal Tambah User ────────────────────────────────────────
 const showAddModal = ref(false);
+const processingAdd = ref(false);
 
-const addForm = useForm({
+const addForm = ref({
     name: '',
     email: '',
     password: '',
     divisi_id: '' as number | string,
     role: '',
+    errors: {} as Record<string, string>,
 });
 
-const submitAdd = () => {
-    addForm.post(route('users.store'), {
-        onSuccess: () => {
-            showAddModal.value = false;
-            addForm.reset();
-            Swal.fire('Berhasil!', 'Data user berhasil ditambahkan.', 'success');
-            router.reload({ only: ['users'] });
-        },
-    });
+const submitAdd = async () => {
+    processingAdd.value = true;
+    addForm.value.errors = {};
+    try {
+        const payload = { ...addForm.value };
+        delete (payload as any).errors;
+        
+        await axios.post('/api/users', payload);
+        showAddModal.value = false;
+        
+        addForm.value.name = '';
+        addForm.value.email = '';
+        addForm.value.password = '';
+        addForm.value.divisi_id = '';
+        addForm.value.role = '';
+        
+        Swal.fire('Berhasil!', 'Data user berhasil ditambahkan.', 'success');
+        fetchUsers();
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            for (const key in error.response.data.errors) {
+                addForm.value.errors[key] = error.response.data.errors[key][0];
+            }
+        }
+    } finally {
+        processingAdd.value = false;
+    }
 };
 
 // ── Modal Edit User ────────────────────────────────────────
 const showEditModal = ref(false);
+const processingEdit = ref(false);
 const editingUser = ref<User | null>(null);
 
-const editForm = useForm({
+const editForm = ref({
     name: '',
     email: '',
     password: '',
     divisi_id: '' as number | string,
     role: '',
-    _method: 'PUT',
+    errors: {} as Record<string, string>,
 });
 
 const openEdit = (user: User) => {
     editingUser.value = user;
-    editForm.name = user.name;
-    editForm.email = user.email;
-    editForm.password = ''; // kosongkan kecuali mau diubah
-    editForm.divisi_id = user.divisi_id || '';
-    editForm.role = user.role !== '-' ? user.role : '';
+    editForm.value.name = user.name;
+    editForm.value.email = user.email;
+    editForm.value.password = ''; // kosongkan kecuali mau diubah
+    editForm.value.divisi_id = user.divisi_id || '';
+    editForm.value.role = user.role !== '-' ? user.role : '';
+    editForm.value.errors = {};
     showEditModal.value = true;
 };
 
-const submitEdit = () => {
+const submitEdit = async () => {
     if (!editingUser.value) return;
-    editForm.post(route('users.update', editingUser.value.id), {
-        onSuccess: () => {
-            showEditModal.value = false;
-            editForm.reset();
-            Swal.fire('Berhasil!', 'Data user berhasil diperbarui.', 'success');
-            router.reload({ only: ['users'] });
-        },
-    });
+    processingEdit.value = true;
+    editForm.value.errors = {};
+    
+    try {
+        const payload = { ...editForm.value };
+        delete (payload as any).errors;
+        
+        await axios.put(`/api/users/${editingUser.value.id}`, payload);
+        showEditModal.value = false;
+        Swal.fire('Berhasil!', 'Data user berhasil diperbarui.', 'success');
+        fetchUsers();
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            for (const key in error.response.data.errors) {
+                editForm.value.errors[key] = error.response.data.errors[key][0];
+            }
+        }
+    } finally {
+        processingEdit.value = false;
+    }
 };
 
 // ── Delete ───────────────────────────────────────────────────
@@ -121,26 +173,21 @@ const confirmDelete = (id: number) => {
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            router.delete(route('users.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Terhapus!',
-                        'Data user berhasil dihapus.',
-                        'success'
-                    )
-                }
-            });
+            try {
+                await axios.delete(`/api/users/${id}`);
+                Swal.fire('Terhapus!', 'Data user berhasil dihapus.', 'success');
+                fetchUsers();
+            } catch (error) {
+                Swal.fire('Error', 'Gagal menghapus data', 'error');
+            }
         }
     });
 };
 </script>
 
 <template>
-
-    <Head title="Master Data - User" />
-
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
@@ -383,9 +430,9 @@ const confirmDelete = (id: number) => {
                                     class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
                                     Batal
                                 </button>
-                                <button type="submit" :disabled="addForm.processing"
+                                <button type="submit" :disabled="processingAdd"
                                     class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                    {{ processingAdd ? 'Menyimpan...' : 'Simpan' }}
                                 </button>
                             </div>
                         </form>
@@ -478,9 +525,9 @@ const confirmDelete = (id: number) => {
                                     class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">
                                     Batal
                                 </button>
-                                <button type="submit" :disabled="editForm.processing"
+                                <button type="submit" :disabled="processingEdit"
                                     class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                    {{ editForm.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
+                                    {{ processingEdit ? 'Menyimpan...' : 'Simpan Perubahan' }}
                                 </button>
                             </div>
                         </form>

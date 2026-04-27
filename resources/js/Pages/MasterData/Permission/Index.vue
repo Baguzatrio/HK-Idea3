@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
 import Swal from 'sweetalert2';
 
 interface Divisi {
@@ -19,10 +19,27 @@ interface Permission {
     link_dashboard: string;
 }
 
-const props = defineProps<{
-    permissions: Permission[];
-    divisis: Divisi[];
-}>();
+const permissions = ref<Permission[]>([]);
+const divisis = ref<Divisi[]>([]);
+const isLoading = ref(true);
+
+const fetchPermissions = async () => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get('/api/permissions');
+        permissions.value = response.data.permissions;
+        divisis.value = response.data.divisis;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        Swal.fire('Error', 'Gagal mengambil data permission', 'error');
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchPermissions();
+});
 
 // ── Search & Pagination ──────────────────────────────────────
 const search = ref('');
@@ -31,7 +48,7 @@ const currentPage = ref(1);
 
 const filtered = computed(() => {
     const q = search.value.toLowerCase();
-    return props.permissions.filter(p =>
+    return permissions.value.filter(p =>
         p.nama.toLowerCase().includes(q) ||
         p.nama_divisi.toLowerCase().includes(q) ||
         p.judul_report.toLowerCase().includes(q) ||
@@ -50,58 +67,94 @@ const resetPage = () => { currentPage.value = 1; };
 
 // ── Modal Tambah ─────────────────────────────────────────────
 const showAddModal = ref(false);
+const processingAdd = ref(false);
 
-const addForm = useForm({
+const addForm = ref({
     nama: '',
     divisi_id: '' as number | string,
     judul_report: '',
     nama_report: '',
     link_dashboard: '',
+    errors: {} as Record<string, string>,
 });
 
-const submitAdd = () => {
-    addForm.post(route('permissions.store'), {
-        onSuccess: () => {
-            showAddModal.value = false;
-            addForm.reset();
-            Swal.fire('Berhasil!', 'Data permission berhasil ditambahkan.', 'success');
-            router.reload({ only: ['permissions'] });
-        },
-    });
+const submitAdd = async () => {
+    processingAdd.value = true;
+    addForm.value.errors = {};
+    try {
+        const payload = { ...addForm.value };
+        delete (payload as any).errors;
+
+        await axios.post('/api/permissions', payload);
+        
+        showAddModal.value = false;
+        
+        addForm.value.nama = '';
+        addForm.value.divisi_id = '';
+        addForm.value.judul_report = '';
+        addForm.value.nama_report = '';
+        addForm.value.link_dashboard = '';
+        
+        Swal.fire('Berhasil!', 'Data permission berhasil ditambahkan.', 'success');
+        fetchPermissions();
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            for (const key in error.response.data.errors) {
+                addForm.value.errors[key] = error.response.data.errors[key][0];
+            }
+        }
+    } finally {
+        processingAdd.value = false;
+    }
 };
 
 // ── Modal Edit ───────────────────────────────────────────────
 const showEditModal = ref(false);
+const processingEdit = ref(false);
 const editingPermission = ref<Permission | null>(null);
 
-const editForm = useForm({
+const editForm = ref({
     nama: '',
     divisi_id: '' as number | string,
     judul_report: '',
     nama_report: '',
     link_dashboard: '',
+    errors: {} as Record<string, string>,
 });
 
 const openEdit = (permission: Permission) => {
     editingPermission.value = permission;
-    editForm.nama           = permission.nama;
-    editForm.divisi_id      = permission.divisi_id || '';
-    editForm.judul_report   = permission.judul_report;
-    editForm.nama_report    = permission.nama_report;
-    editForm.link_dashboard = permission.link_dashboard;
+    editForm.value.nama           = permission.nama;
+    editForm.value.divisi_id      = permission.divisi_id || '';
+    editForm.value.judul_report   = permission.judul_report;
+    editForm.value.nama_report    = permission.nama_report;
+    editForm.value.link_dashboard = permission.link_dashboard;
+    editForm.value.errors         = {};
     showEditModal.value = true;
 };
 
-const submitEdit = () => {
+const submitEdit = async () => {
     if (!editingPermission.value) return;
-    editForm.put(route('permissions.update', editingPermission.value.id), {
-        onSuccess: () => {
-            showEditModal.value = false;
-            editForm.reset();
-            Swal.fire('Berhasil!', 'Data permission berhasil diperbarui.', 'success');
-            router.reload({ only: ['permissions'] });
-        },
-    });
+    processingEdit.value = true;
+    editForm.value.errors = {};
+    
+    try {
+        const payload = { ...editForm.value };
+        delete (payload as any).errors;
+
+        await axios.put(`/api/permissions/${editingPermission.value.id}`, payload);
+        showEditModal.value = false;
+        Swal.fire('Berhasil!', 'Data permission berhasil diperbarui.', 'success');
+        fetchPermissions();
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            for (const key in error.response.data.errors) {
+                editForm.value.errors[key] = error.response.data.errors[key][0];
+            }
+        }
+    } finally {
+        processingEdit.value = false;
+    }
 };
 
 // ── Delete ───────────────────────────────────────────────────
@@ -115,17 +168,15 @@ const confirmDelete = (id: number) => {
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            router.delete(route('permissions.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Terhapus!',
-                        'Data permission berhasil dihapus.',
-                        'success'
-                    )
-                }
-            });
+            try {
+                await axios.delete(`/api/permissions/${id}`);
+                Swal.fire('Terhapus!', 'Data permission berhasil dihapus.', 'success');
+                fetchPermissions();
+            } catch (error) {
+                Swal.fire('Error', 'Gagal menghapus data', 'error');
+            }
         }
     });
 };
@@ -141,9 +192,6 @@ const openPreview = (url: string) => {
 </script>
 
 <template>
-
-    <Head title="Master Data - Permission" />
-
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
@@ -391,9 +439,9 @@ const openPreview = (url: string) => {
                             <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
                                 <button type="button" @click="showAddModal = false"
                                     class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                                <button type="submit" :disabled="addForm.processing"
+                                <button type="submit" :disabled="processingAdd"
                                     class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                    {{ addForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                                    {{ processingAdd ? 'Menyimpan...' : 'Simpan' }}
                                 </button>
                             </div>
                         </form>
@@ -474,9 +522,9 @@ const openPreview = (url: string) => {
                             <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
                                 <button type="button" @click="showEditModal = false"
                                     class="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-100 transition">Batal</button>
-                                <button type="submit" :disabled="editForm.processing"
+                                <button type="submit" :disabled="processingEdit"
                                     class="px-4 py-2 text-sm rounded-md bg-blue-900 hover:bg-blue-800 text-white font-medium transition disabled:opacity-50">
-                                    {{ editForm.processing ? 'Menyimpan...' : 'Update' }}
+                                    {{ processingEdit ? 'Menyimpan...' : 'Update' }}
                                 </button>
                             </div>
                         </form>

@@ -23,7 +23,7 @@ class DivisiController extends Controller
             ];
         });
 
-        return Inertia::render('MasterData/Divisi/Index', [
+        return response()->json([
             'divisis' => $divisis,
         ]);
     }
@@ -53,7 +53,7 @@ class DivisiController extends Controller
             'no_urut' => $request->no_urut ?? 0,
         ]);
 
-        return redirect()->route('divisis.index')->with('success', 'Divisi berhasil ditambahkan.');
+        return response()->json(['message' => 'Divisi berhasil ditambahkan.']);
     }
 
     public function update(Request $request, Divisi $divisi)
@@ -85,7 +85,7 @@ class DivisiController extends Controller
             'no_urut' => $request->no_urut ?? 0,
         ]);
 
-        return redirect()->route('divisis.index')->with('success', 'Divisi berhasil diupdate.');
+        return response()->json(['message' => 'Divisi berhasil diupdate.']);
     }
 
     public function destroy(Divisi $divisi)
@@ -96,6 +96,6 @@ class DivisiController extends Controller
 
         $divisi->delete();
 
-        return redirect()->route('divisis.index')->with('success', 'Divisi berhasil dihapus.');
+        return response()->json(['message' => 'Divisi berhasil dihapus.']);
     }
 }
