@@ -2,25 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Permission;
 
+
+#[Fillable(['kode', 'nama', 'lantai', 'logo', 'url', 'no_urut'])]
 class Divisi extends Model
 {
     use HasFactory;
 
     protected $table = 'divisi';
-
-    protected $fillable = [
-        'kode',
-        'nama',
-        'lantai',
-        'logo',
-        'url',
-        'no_urut',
-    ];
 
     public function users(): HasMany
     {

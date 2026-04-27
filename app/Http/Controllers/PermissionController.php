@@ -11,10 +11,10 @@ class PermissionController extends Controller
 {
     public function index()
     {
-        $permissions = Permission::get()
+        $permissions = Permission::query()->get()
             ->map(function ($p) {
                 // To avoid relation error if not defined on Spatie model, let's fetch divisi name via Divisi model
-                $divisi = Divisi::find($p->divisi_id);
+                $divisi = Divisi::query()->find($p->divisi_id);
                 return [
                     'id'             => $p->id,
                     'nama'           => $p->name, // from Spatie column
@@ -26,9 +26,9 @@ class PermissionController extends Controller
                 ];
             });
 
-        $divisis = Divisi::orderBy('nama')->get(['id', 'nama']);
+        $divisis = Divisi::query()->orderBy('nama', 'asc')->get(['id', 'nama']);
 
-        return Inertia::render('MasterData/Permission/Index', [
+        return response()->json([
             'permissions' => $permissions,
             'divisis'     => $divisis,
         ]);
@@ -45,15 +45,15 @@ class PermissionController extends Controller
         ]);
 
         Permission::create([
-            'name'           => $request->nama,
+            'name'           => $request->input('nama'),
             'guard_name'     => 'web',
-            'divisi_id'      => $request->divisi_id,
-            'judul_report'   => $request->judul_report,
-            'nama_report'    => $request->nama_report,
-            'link_dashboard' => $request->link_dashboard,
+            'divisi_id'      => $request->input('divisi_id'),
+            'judul_report'   => $request->input('judul_report'),
+            'nama_report'    => $request->input('nama_report'),
+            'link_dashboard' => $request->input('link_dashboard'),
         ]);
 
-        return redirect()->route('permissions.index')->with('success', 'Permission berhasil ditambahkan.');
+        return response()->json(['message' => 'Permission berhasil ditambahkan.']);
     }
 
     public function update(Request $request, Permission $permission)
@@ -67,20 +67,20 @@ class PermissionController extends Controller
         ]);
 
         $permission->update([
-            'name'           => $request->nama,
-            'divisi_id'      => $request->divisi_id,
-            'judul_report'   => $request->judul_report,
-            'nama_report'    => $request->nama_report,
-            'link_dashboard' => $request->link_dashboard,
+            'name'           => $request->input('nama'),
+            'divisi_id'      => $request->input('divisi_id'),
+            'judul_report'   => $request->input('judul_report'),
+            'nama_report'    => $request->input('nama_report'),
+            'link_dashboard' => $request->input('link_dashboard'),
         ]);
 
-        return redirect()->route('permissions.index')->with('success', 'Permission berhasil diupdate.');
+        return response()->json(['message' => 'Permission berhasil diupdate.']);
     }
 
     public function destroy(Permission $permission)
     {
-        $permission->delete();
+        $permission->deleteOrFail();
 
-        return redirect()->route('permissions.index')->with('success', 'Permission berhasil dihapus.');
+        return response()->json(['message' => 'Permission berhasil dihapus.']);
     }
 }

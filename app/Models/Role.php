@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Spatie\Permission\Models\Role as SpatieRole;
 
+#[Fillable(['name', 'guard_name'])]
 class Role extends SpatieRole
 {
-    protected $fillable = [
-        'name',
-        'guard_name',
-    ];
+
 }
