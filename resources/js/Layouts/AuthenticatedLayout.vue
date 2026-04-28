@@ -35,13 +35,19 @@ onMounted(() => {
 
 <template>
     <div class="min-h-screen flex flex-col" v-if="authState.user">
-        <div class="flex flex-col flex-1 bg-gray-100">
-            <div class="sticky top-0 z-50 shadow-md backdrop-blur-md bg-white/50">
+        <div
+            class="absolute top-[20px] left-[-100px] w-[300px] h-[300px] bg-red-200 opacity-20 blur-3xl rounded-full pointer-events-none z-0">
+        </div>
+        <div
+            class="absolute bottom-[-300px] right-[10px] w-[300px] h-[300px] bg-blue-300 opacity-20 blur-3xl rounded-full ">
+        </div>
+        <div class="flex flex-col flex-1 relative z-10">
+            <div class="sticky top-0 z-50 shadow-md backdrop-blur-md bg-white/70">
                 <div class="bg-blue-900 backdrop-blur-md py-4"></div>
                 <div class="bg-red-500 h-0.5"></div>
                 <nav class=" border-b border-gray-100 ">
                     <!-- Primary Navigation Menu -->
-                    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="mx-auto  max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div class="flex h-16 justify-between">
                             <div class="flex">
                                 <!-- Logo -->
@@ -177,14 +183,12 @@ onMounted(() => {
                     </div>
                 </nav>
             </div>
-
             <!-- Page Heading -->
-            <header class="bg-white shadow" v-if="$slots.header">
+            <header v-if="$slots.header">
                 <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     <slot name="header" />
                 </div>
             </header>
-
             <!-- Page Content -->
             <main class="flex-grow min-h-screen">
                 <slot />
@@ -194,7 +198,8 @@ onMounted(() => {
             </div>
         </div>
     </div>
-    <div v-else class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div v-else
+        class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-blue-200">
         <!-- Optional Loading indicator wait state before user info is fetched -->
         <span class="text-gray-500">Memuat data pengguna...</span>
     </div>
