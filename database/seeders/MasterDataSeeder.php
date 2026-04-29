@@ -74,9 +74,9 @@ class MasterDataSeeder extends Seeder
 
         // 4. Buat Akun Super Admin & Manager
         $superAdminUser = User::updateOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'satrio@gmail.com'],
             [
-                'name'      => 'Super Admin',
+                'name'      => 'Muhammad Bagus Satrio Aji',
                 'password'  => Hash::make('password'),
                 'divisi_id' => $divisiIT->id,
             ]
