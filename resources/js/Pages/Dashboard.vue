@@ -151,7 +151,7 @@ const selectPermission = (permission: Permission) => {
                     <div v-else class="flex flex-wrap justify-center gap-4">
                         <button v-for="divisi in divisis" :key="divisi.id" @click="selectDivisi(divisi)" :class="[
                             'flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
-                            'w-[calc(100%/6-1rem)] min-w-[100px] max-w-[140px]',
+                            'w-[calc(100%/6-1rem)] min-w-[140px] max-w-[140px]',
                             activeDivisi?.id === divisi.id
                                 ? 'border-blue-900 bg-blue-50 shadow-md scale-105'
                                 : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:scale-105'
@@ -168,7 +168,7 @@ const selectPermission = (permission: Permission) => {
                             </div>
 
                             <!-- Kode Divisi -->
-                            <span class="text-xs font-medium text-gray-700 text-center leading-tight line-clamp-2">
+                            <span class="text-md font-medium text-gray-700 text-center leading-tight line-clamp-2">
                                 {{ divisi.kode }}
                             </span>
 

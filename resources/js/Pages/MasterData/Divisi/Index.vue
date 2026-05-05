@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -56,6 +56,10 @@ const paginated = computed(() => {
 });
 
 const resetPage = () => { currentPage.value = 1; };
+
+watch(currentPage, () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 // ── Modal Tambah ─────────────────────────────────────────────
 const showAddModal = ref(false);

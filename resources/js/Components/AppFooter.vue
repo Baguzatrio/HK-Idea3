@@ -3,7 +3,7 @@
     <div class="footer-container">
 
       <!-- Bisnis Kami -->
-      <div class="footer-col">
+      <!-- <div class="footer-col">
         <h3 class="footer-heading">BISNIS KAMI</h3>
         <ul class="footer-links">
           <li><a href="#">Trans Sumatera</a></li>
@@ -12,10 +12,10 @@
           <li><a href="#">Manufaktur</a></li>
           <li><a href="#">Pengembangan Properti</a></li>
         </ul>
-      </div>
+      </div> -->
 
       <!-- Quick Link -->
-      <div class="footer-col">
+      <!-- <div class="footer-col">
         <h3 class="footer-heading">QUICK LINK</h3>
         <ul class="footer-links">
           <li><a href="#">Pengumuman</a></li>
@@ -23,10 +23,10 @@
           <li><a href="#">Report</a></li>
           <li><a href="#">More Publication</a></li>
         </ul>
-      </div>
+      </div> -->
 
       <!-- Tools -->
-      <div class="footer-col">
+      <!-- <div class="footer-col">
         <h3 class="footer-heading">TOOLS</h3>
         <ul class="footer-links">
           <li><a href="#">WBS</a></li>
@@ -34,14 +34,23 @@
           <li><a href="#">E-Procurement</a></li>
           <li><a href="#">CSIRT</a></li>
         </ul>
+      </div> -->
+
+      <!-- Big Title Area -->
+      <div class="flex-1 flex items-center lg:pr-10 pb-8 lg:pb-0">
+        <a href="https://www.hutamakarya.com/">
+          <h1 class="text-6xl md:text-8xl font-black text-white/50 tracking-tight leading-tight uppercase select-none">
+            Hutama <br>Karya
+          </h1>
+        </a>
       </div>
 
       <!-- Head Office -->
       <div class="footer-col">
         <h3 class="footer-heading">HEAD OFFICE</h3>
         <p class="footer-address">
-          HK Tower, Jl Letjen MT Haryono Kav. 8, Cawang,<br />
-          East Jakarta City, Jakarta 13340
+          HK Tower, Jl Letjen MT Haryono <br>Kav. 8, Cawang,
+          East Jakarta City,<br> Jakarta 13340
         </p>
 
         <h3 class="footer-heading footer-heading--part-of">PART OF</h3>
@@ -54,16 +63,16 @@
       </div>
 
     </div>
-    
+
 
     <!-- Bottom bar -->
     <div class="footer-bottom">
       <div class="footer-bottom-line"></div>
     </div>
-    
-        <p class="text-center text-sm text-gray-400 py-6">
-          &copy; 2026 PT Hutama Karya (Persero). All rights reserved.
-        </p>
+
+    <p class="text-center text-sm text-gray-400 py-6">
+      &copy; 2026 PT Hutama Karya (Persero). All rights reserved.
+    </p>
   </footer>
 </template>
 
@@ -82,11 +91,11 @@
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 40px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 40px;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
 }
+
 
 /* Heading */
 .footer-heading {
@@ -180,6 +189,7 @@
   height: 1px;
   background: linear-gradient(to right, #cc0000 30%);
 }
+
 .layout {
   min-height: 100vh;
   display: flex;

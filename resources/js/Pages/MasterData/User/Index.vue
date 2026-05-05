@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { ref, computed, onMounted } from 'vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -70,6 +71,10 @@ const paginated = computed(() => {
 });
 
 const resetPage = () => { currentPage.value = 1; };
+
+watch(currentPage, () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 // ── Modal Tambah User ────────────────────────────────────────
 const showAddModal = ref(false);
@@ -399,13 +404,7 @@ const confirmDelete = (id: number) => {
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
-                                    <select v-model="addForm.divisi_id"
-                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">-- Tidak ada divisi --</option>
-                                        <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
-                                            }}
-                                        </option>
-                                    </select>
+                                    <SearchableSelect v-model="addForm.divisi_id" :options="divisis" valueKey="id" labelKey="nama" placeholder="-- Pilih Divisi --" />
                                     <p v-if="addForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
                                         addForm.errors.divisi_id
                                         }}</p>
@@ -413,12 +412,7 @@ const confirmDelete = (id: number) => {
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                    <select v-model="addForm.role"
-                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">-- Tidak ada role --</option>
-                                        <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
-                                        </option>
-                                    </select>
+                                    <SearchableSelect v-model="addForm.role" :options="roles" valueKey="nama" labelKey="nama" placeholder="-- Pilih Role --" />
                                     <p v-if="addForm.errors.role" class="text-red-500 text-xs mt-1">{{ addForm.errors.role
                                         }}</p>
                                 </div>
@@ -495,25 +489,14 @@ const confirmDelete = (id: number) => {
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Divisi</label>
-                                    <select v-model="editForm.divisi_id"
-                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">-- Tidak ada divisi --</option>
-                                        <option v-for="divisi in divisis" :key="divisi.id" :value="divisi.id">{{ divisi.nama
-                                            }}
-                                        </option>
-                                    </select>
+                                    <SearchableSelect v-model="editForm.divisi_id" :options="divisis" valueKey="id" labelKey="nama" placeholder="-- Pilih Divisi --" />
                                     <p v-if="editForm.errors.divisi_id" class="text-red-500 text-xs mt-1">{{
                                         editForm.errors.divisi_id }}</p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                    <select v-model="editForm.role"
-                                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">-- Tidak ada role --</option>
-                                        <option v-for="role in roles" :key="role.id" :value="role.nama">{{ role.nama }}
-                                        </option>
-                                    </select>
+                                    <SearchableSelect v-model="editForm.role" :options="roles" valueKey="nama" labelKey="nama" placeholder="-- Pilih Role --" />
                                     <p v-if="editForm.errors.role" class="text-red-500 text-xs mt-1">{{ editForm.errors.role
                                         }}</p>
                                 </div>

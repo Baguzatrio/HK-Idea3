@@ -4,10 +4,10 @@ import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 <template>
     <div
-        class="flex min-h-screen flex-col items-center bg-gradient-to-br from-indigo-100 via-white to-blue-200 pt-6 sm:justify-center sm:pt-0">
+        class="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-100/50 via-white to-blue-200/50 pt-6 sm:justify-center sm:pt-0">
         <div>
             <router-link to="/">
-                <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" />
+                <img src="\images\logo\logoHK.png" alt="" class="block h-20 w-auto fill-current">
             </router-link>
         </div>
 

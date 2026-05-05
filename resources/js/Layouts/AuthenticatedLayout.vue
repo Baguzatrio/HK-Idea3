@@ -202,8 +202,9 @@ onMounted(() => {
         </div>
     </div>
     <div v-else
-        class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-blue-200">
+        class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-white to-blue-200/50">
         <!-- Optional Loading indicator wait state before user info is fetched -->
+        <img src="\images\logo\logoHK.png" alt="" class="w-26 h-16">
         <span class="text-gray-500">Memuat data pengguna...</span>
     </div>
 </template>
